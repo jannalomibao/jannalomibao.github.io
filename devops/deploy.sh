@@ -53,5 +53,8 @@ if command -v gh >/dev/null 2>&1; then
   echo
   echo "==> Watching the workflow run (Ctrl+C to stop watching; the deploy keeps going)"
   sleep 5
-  gh run watch --repo jannalomibao/jannalomibao.github.io || true
+  RUN_ID="$(gh run list --repo jannalomibao/jannalomibao.github.io --branch "$BRANCH" --limit 1 --json databaseId --jq '.[0].databaseId')"
+  if [ -n "$RUN_ID" ]; then
+    gh run watch "$RUN_ID" --repo jannalomibao/jannalomibao.github.io --exit-status || true
+  fi
 fi
