@@ -1,0 +1,9 @@
+# OS / editor
+.DS_Store
+*.swp
+
+# Terraform (each module dir also has its own, this catches any stray state)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars

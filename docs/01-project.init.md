@@ -1,0 +1,6 @@
+- [x] create a PRD for my portfolio website
+- [x] create a user flow diagram for all the pages pf my websites include mermaid.js, include sitemap
+- [x] create a design system(branding) for my website
+- [ ] break all the req into stories(with UAC),  technical approach
+- [ ] create an architecture and insfratrusture doc . I want to use react with vite, supabase for db and nestjs(node) for my backend. and i wnat everything to be containerized with docker
+- [ ] all of this must be in a mark down file

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Janna Lomibao — Software Developer</title>
+    <!--
+      GitHub Pages only serves static files, so a direct hit on a client-side
+      route (e.g. /projects/ledgerline) 404s at the CDN before React Router
+      ever loads. This is the standard workaround (rafgraph/spa-github-pages):
+      encode the intended path into a query string, redirect to the real
+      index.html, then a matching snippet in index.html decodes it and
+      restores the URL via history.replaceState before React mounts.
+
+      pathSegmentsToKeep is 0 because this deploys to the root of a GitHub
+      *user* Pages site (jannalomibao.github.io), not a /repo-name/ subpath.
+    -->
+    <script>
+      var pathSegmentsToKeep = 0;
+      var l = window.location;
+      l.replace(
+        l.protocol + "//" + l.hostname + (l.port ? ":" + l.port : "") +
+        l.pathname.split("/").slice(0, 1 + pathSegmentsToKeep).join("/") + "/?/" +
+        l.pathname.slice(1).split("/").slice(pathSegmentsToKeep).join("/").replace(/&/g, "~and~") +
+        (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+        l.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>
