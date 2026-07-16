@@ -1,32 +1,41 @@
-# React + TypeScript + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite + TypeScript + Tailwind CSS v4 portfolio site. See the
+[root README](../README.md) for setup, deploy, and project-wide notes — this file only covers
+things specific to working inside `frontend/`.
 
-Currently, two official plugins are available:
+## Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Command | Does |
+|---|---|
+| `npm run dev` | Start the dev server (default: http://localhost:5173) |
+| `npm run build` | Type-check (`tsc -b`) then production build to `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm run lint` | Run Oxlint |
 
-## React Compiler
+## Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+src/
+  components/
+    layout/   Header, Footer, Layout (nav, page-transition shell, custom cursor)
+    ui/       Shared primitives: Reveal, SectionHeading, ProjectCard, Cursor, BrandIcons
+  data/
+    content.ts   All page content (profile, projects, posts, resume) — currently mock data
+  pages/         One file per route (Home, About, Projects, ProjectDetail, Blog, BlogDetail,
+                 Resume, Contact, NotFound)
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Design tokens (colors, fonts) live in `src/index.css` under the Tailwind v4 `@theme` block.
+See [`docs/04-design-system.md`](../docs/04-design-system.md) for the full design reference.
+
+## Editing content
+
+Everything a recruiter would see — bio, skills, projects, blog posts, resume — is mock data in
+`src/data/content.ts`. Edit that file directly; there's no CMS/backend wired up yet (see the
+"Known limitations" section of the root README).
+
+## Path alias
+
+`@/` resolves to `src/` (configured in both `vite.config.ts` and `tsconfig.app.json` — if you
+add a new alias, update both).
