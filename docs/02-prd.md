@@ -118,3 +118,4 @@ Full architecture, service boundaries, and infrastructure are defined in the
 - [Design System / Branding](04-design-system.md)
 - [User Stories & Technical Approach](05-user-stories.md)
 - [Architecture & Infrastructure](06-architecture-infrastructure.md)
+- [API Contract](07-api-contract.md)

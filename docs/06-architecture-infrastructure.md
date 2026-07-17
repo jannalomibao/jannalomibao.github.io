@@ -127,7 +127,8 @@ Notes:
 ## 4. API Surface
 
 Base path `/api`. Public routes require no auth; Admin routes require a valid Supabase session
-(verified per [§5](#5-authentication)).
+(verified per [§5](#5-authentication)). Full request/response schemas, validation rules, and
+error formats for every route below are in the [API Contract](07-api-contract.md).
 
 | Method & Path | Access | Maps to |
 |---|---|---|

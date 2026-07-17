@@ -23,6 +23,8 @@ what's built vs. still planned. Individual docs:
   acceptance criteria, technical approach, and honest build status per story
 - [Architecture & Infrastructure](docs/06-architecture-infrastructure.md) — NestJS + Supabase +
   Docker plan for everything the frontend currently mocks (not built yet — see below)
+- [API Contract](docs/07-api-contract.md) — request/response schemas, validation, error format,
+  and rate limits for every backend endpoint (spec only — `backend/` doesn't exist yet)
 - [Code reviews](docs/code-reviews/) — dated reports from the project's `/code-review` skill
 
 ## Local setup
