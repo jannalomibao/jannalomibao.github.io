@@ -3,10 +3,11 @@
 Related: [PRD](02-prd.md) · [User Flow & Sitemap](03-user-flow-sitemap.md) · [Design System](04-design-system.md)
 
 Each story maps back to one or more PRD functional/non-functional requirements (`FR-#`/`NFR-#`).
-**Status** reflects what's actually built as of this doc, not intent — `frontend/` currently
-implements the public site against mock data in `frontend/src/data/content.ts`; there is no
-backend, database, or admin auth yet (that's Epics 6–10, pending the
-[Architecture & Infrastructure doc](06-architecture-infrastructure.md)).
+**Status** reflects what's actually built as of this doc, not intent — `frontend/` implements
+the public site against mock data in `frontend/src/data/content.ts`; `backend/` implements the
+public read routes (Epic 7.1) against a real Postgres schema, but nothing calls it from the
+frontend yet (7.2), and there is no database write path, admin auth, or CMS yet (Epics 2.3, 3.2,
+4.2, 5.2, 6 — see the [Architecture & Infrastructure doc](06-architecture-infrastructure.md)).
 
 Status legend: ✅ Done · 🟡 Partial (built but not to the full story, see note) · ⬜ Not started
 
@@ -324,11 +325,14 @@ real database with a defined schema, so content survives restarts and has consis
 - Given the NestJS API, when any endpoint returns dynamic content, then its shape matches a
   documented type shared with (or mirrored in) the frontend.
 
-**Technical approach:** Defined fully in the [Architecture & Infrastructure doc](06-architecture-infrastructure.md)
-— this story is the placeholder marking that dependency; not further specified here to avoid
-duplicating that doc.
+**Technical approach:** Implemented per the [Architecture & Infrastructure doc](06-architecture-infrastructure.md) —
+SQL migrations in `supabase/migrations/` are the schema's source of truth (not `prisma migrate`),
+introspected into `backend/prisma/schema.prisma` with camelCase `@map`ped fields so Prisma
+Client's output matches the [API Contract](07-api-contract.md)'s JSON shapes directly.
 
-**Status:** ⬜ Not started.
+**Status:** ✅ Done — all four tables exist with the constraints from architecture doc §3
+(unique/format-checked slugs, required fields, RLS enabled with zero policies as defense in
+depth). Verified against a running local Supabase stack, not just written and assumed correct.
 
 ### 7.2 Frontend consumes real data instead of mocks
 **Story:** As a visitor, I want to see content the owner actually published, not hardcoded
@@ -360,8 +364,10 @@ backend exists.
 | 4. Resume / CV | 2 | 1 Partial, 1 Not started |
 | 5. Contact | 2 | 1 Partial, 1 Not started |
 | 6. Admin Authentication | 2 | Not started |
-| 7. Data & API Foundation | 2 | Not started |
+| 7. Data & API Foundation | 2 | 1 Done, 1 Not started |
 
-Everything marked Done or Partial exists in `frontend/` today. Everything Not started requires
-the backend/infra work covered by the pending
-[Architecture & Infrastructure doc](06-architecture-infrastructure.md).
+Everything marked Done or Partial exists in `frontend/` and/or `backend/` today (public read
+routes for projects/posts/resume now work end-to-end against real Postgres — see `backend/`).
+The frontend doesn't call any of it yet (7.2), so nothing visitor-facing has changed. Everything
+else Not started follows the sequencing plan in
+[Architecture & Infrastructure §11](06-architecture-infrastructure.md#11-sequencing).

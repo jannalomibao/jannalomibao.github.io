@@ -8,8 +8,11 @@ projects, writing, resume, contact). Live at **<https://jannalomibao.github.io/>
 ```text
 docs/       Planning docs — PRD, user flow/sitemap, design system, user stories, architecture
 frontend/   The actual site: React + Vite + TypeScript + Tailwind CSS v4
+backend/    NestJS API — public read routes only so far (see docs/07-api-contract.md)
+supabase/   Supabase CLI config + SQL migrations (schema source of truth)
 devops/     Deployment infra: Terraform (GitHub Pages config) + the deploy script
-.github/    GitHub Actions workflow that builds and deploys on push
+.github/    GitHub Actions workflow that builds and deploys the frontend on push
+docker-compose.yml   Local dev orchestration for frontend + backend
 ```
 
 Start with [`docs/01-project.init.md`](docs/01-project.init.md) for the running checklist of
@@ -22,14 +25,16 @@ what's built vs. still planned. Individual docs:
 - [User Stories & UAC](docs/05-user-stories.md) — every requirement broken into stories with
   acceptance criteria, technical approach, and honest build status per story
 - [Architecture & Infrastructure](docs/06-architecture-infrastructure.md) — NestJS + Supabase +
-  Docker plan for everything the frontend currently mocks (not built yet — see below)
+  Docker plan; `backend/` implements steps 1–2 of its sequencing plan so far
 - [API Contract](docs/07-api-contract.md) — request/response schemas, validation, error format,
-  and rate limits for every backend endpoint (spec only — `backend/` doesn't exist yet)
+  and rate limits for every backend endpoint (public read routes implemented; admin/contact not yet)
 - [Code reviews](docs/code-reviews/) — dated reports from the project's `/code-review` skill
 
 ## Local setup
 
 Requires Node 20+.
+
+### Frontend only (still all mock data — this is enough for most UI work)
 
 ```bash
 cd frontend
@@ -45,6 +50,17 @@ npm run preview     # serve that build locally
 ```
 
 See [`frontend/README.md`](frontend/README.md) for the file structure and where content lives.
+
+### Frontend + backend (requires Docker)
+
+```bash
+supabase start                 # local Postgres/Auth/Storage stack
+docker compose up --build      # frontend :5173, backend :3000
+```
+
+See [`backend/README.md`](backend/README.md) for backend-only setup (no Docker), schema-change
+workflow, and a few real gotchas hit while building it (worth reading before touching
+`Dockerfile` or `prisma/schema.prisma`).
 
 ## Deploying
 
@@ -90,12 +106,12 @@ re-running if you change *how* Pages is configured, not on every deploy.
   don't delete it carelessly, and don't run `terraform apply` from a second machine without
   copying state over first (or it'll try to recreate resources that already exist).
 
-- **No backend yet.** Projects, blog posts, resume, and the contact form are all mock
-  data/client-side-only (`frontend/src/data/content.ts`; contact form just simulates success).
-  The full NestJS + Supabase + Docker plan is written up in
-  [`docs/06-architecture-infrastructure.md`](docs/06-architecture-infrastructure.md) — designed,
-  not yet built. See [`docs/05-user-stories.md`](docs/05-user-stories.md) for exactly which
-  stories that unblocks.
+- **Backend is partial — public reads only.** `backend/` implements `GET /api/projects`,
+  `/api/projects/:slug`, `/api/posts`, `/api/posts/:slug`, `/api/resume`, `/api/resume/pdf`
+  against a real Postgres schema (`supabase/migrations/`). The frontend doesn't call any of it
+  yet — it's still entirely on mock data (`frontend/src/data/content.ts`; contact form just
+  simulates success) — that wiring is User Story 7.2, not done. Admin auth/CRUD and the contact
+  endpoint (architecture doc §11 steps 4–6) aren't built either.
 
 - **Design system is descriptive, not aspirational.** `docs/04-design-system.md` documents
   what's actually in the code (colors, type scale, component patterns). If you change a token
@@ -104,4 +120,5 @@ re-running if you change *how* Pages is configured, not on every deploy.
 ## Tech stack
 
 React 19 · Vite 8 · TypeScript · Tailwind CSS v4 · React Router · Framer Motion · lucide-react
-· Terraform (`integrations/github` provider) · GitHub Actions · GitHub Pages
+· NestJS · Prisma · Supabase (Postgres) · Docker · Terraform (`integrations/github` provider) ·
+GitHub Actions · GitHub Pages

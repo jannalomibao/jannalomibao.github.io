@@ -1,0 +1,83 @@
+// prisma-client-js (not the newer ESM-native "prisma-client" generator):
+// NestJS's default project here is CommonJS, and that generator's output
+// uses import.meta.url / top-level ESM, which doesn't interop cleanly.
+//
+// No custom `output` path: the default node_modules/@prisma/client location
+// resolves identically from src/ (ts-node/nest start:dev) and dist/ (compiled
+// output) since it's a package-style resolution, not a relative path — a
+// custom output dir here previously broke at runtime because tsc's compiled
+// dist/ nesting doesn't preserve the same relative distance back to it.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Field names are camelCase (matching docs/07-api-contract.md's JSON shapes)
+// mapped via @map to the snake_case columns owned by supabase/migrations —
+// those SQL files are the schema's source of truth, not `prisma migrate`.
+// Check constraints and RLS live in the migration SQL directly; Prisma
+// doesn't model them, but they're enforced by Postgres regardless.
+
+model Project {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug      String   @unique
+  title     String
+  summary   String
+  problem   String
+  role      String
+  outcome   String
+  stack     String[] @default([])
+  imageUrl  String   @map("image_url")
+  repoUrl   String?  @map("repo_url")
+  demoUrl   String?  @map("demo_url")
+  featured  Boolean  @default(false)
+  published Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("projects")
+}
+
+model Post {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String    @unique
+  title        String
+  excerpt      String
+  content      String
+  imageUrl     String    @map("image_url")
+  readMinutes  Int       @map("read_minutes")
+  published    Boolean   @default(false)
+  publishedAt  DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("posts")
+}
+
+model Resume {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  summary    String   @default("")
+  experience Json     @default("[]")
+  education  Json     @default("[]")
+  skills     String[] @default([])
+  pdfUrl     String?  @map("pdf_url")
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("resume")
+}
+
+model ContactSubmission {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  email     String
+  message   String
+  status    String   @default("unread")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@map("contact_submissions")
+}

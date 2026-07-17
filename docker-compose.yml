@@ -1,0 +1,36 @@
+# Local dev orchestration for frontend + backend (docs/06-architecture-infrastructure.md §7).
+#
+# Supabase itself is NOT a service here — run `supabase start` separately
+# first (its own Docker Compose stack, managed by the Supabase CLI: local
+# Postgres, Auth, Storage, Studio). This file only wires frontend + backend
+# to that already-running local stack via DATABASE_URL.
+#
+# Usage:
+#   supabase start          # once per session, until `supabase stop`
+#   docker compose up        # frontend on :5173, backend on :3000
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:54322/postgres?schema=public}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+      PORT: 3000
+    extra_hosts:
+      # host.docker.internal works out of the box on Docker Desktop
+      # (Mac/Windows); this makes it resolve on Linux too.
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Not yet consumed by the frontend code (User Story 7.2 — still on
+      # mock data as of this file). Wired here so it's a no-op env change,
+      # not a compose change, once that integration lands.
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
+    depends_on:
+      - backend
