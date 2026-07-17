@@ -6,7 +6,7 @@ projects, writing, resume, contact). Live at **<https://jannalomibao.github.io/>
 ## Repo layout
 
 ```text
-docs/       Planning docs — PRD, user flow/sitemap, design system, (stories & architecture WIP)
+docs/       Planning docs — PRD, user flow/sitemap, design system, user stories, architecture
 frontend/   The actual site: React + Vite + TypeScript + Tailwind CSS v4
 devops/     Deployment infra: Terraform (GitHub Pages config) + the deploy script
 .github/    GitHub Actions workflow that builds and deploys on push
@@ -19,7 +19,11 @@ what's built vs. still planned. Individual docs:
 - [User Flow & Sitemap](docs/03-user-flow-sitemap.md) — routes, visitor flow, admin flow (mermaid)
 - [Design System](docs/04-design-system.md) — colors, type, spacing, components, motion — written
   from the actual implemented code, not aspirational
-- User stories/UAC and the architecture/infrastructure doc are still pending.
+- [User Stories & UAC](docs/05-user-stories.md) — every requirement broken into stories with
+  acceptance criteria, technical approach, and honest build status per story
+- [Architecture & Infrastructure](docs/06-architecture-infrastructure.md) — NestJS + Supabase +
+  Docker plan for everything the frontend currently mocks (not built yet — see below)
+- [Code reviews](docs/code-reviews/) — dated reports from the project's `/code-review` skill
 
 ## Local setup
 
@@ -86,8 +90,10 @@ re-running if you change *how* Pages is configured, not on every deploy.
 
 - **No backend yet.** Projects, blog posts, resume, and the contact form are all mock
   data/client-side-only (`frontend/src/data/content.ts`; contact form just simulates success).
-  The PRD calls for a NestJS + Supabase backend for real CMS/contact-form persistence — that's
-  the pending architecture doc, not yet built.
+  The full NestJS + Supabase + Docker plan is written up in
+  [`docs/06-architecture-infrastructure.md`](docs/06-architecture-infrastructure.md) — designed,
+  not yet built. See [`docs/05-user-stories.md`](docs/05-user-stories.md) for exactly which
+  stories that unblocks.
 
 - **Design system is descriptive, not aspirational.** `docs/04-design-system.md` documents
   what's actually in the code (colors, type scale, component patterns). If you change a token
