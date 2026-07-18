@@ -66,15 +66,19 @@ flowchart TD
 
 ## UACs
 
-- Demo that visiting `/admin` while logged out redirects to `/admin/login`.
-- Demo that submitting valid owner credentials on `/admin/login` redirects to `/admin` and shows
-  the dashboard shell.
-- Demo that submitting invalid credentials shows an inline error and stays on `/admin/login` —
-  no partial access.
-- Demo that the dashboard shell shows nav entries for Projects, Blog, Resume, and Messages (the
+All six verified by `e2e/tests/002-admin-login-dashboard-shell.spec.ts`, run against both a
+desktop and a mobile viewport — 14/14 passing (plus one bonus test for the already-authenticated
+`/admin/login` redirect mentioned in the Description but not separately listed below).
+
+- ~~Demo that visiting `/admin` while logged out redirects to `/admin/login`.~~
+- ~~Demo that submitting valid owner credentials on `/admin/login` redirects to `/admin` and shows
+  the dashboard shell.~~
+- ~~Demo that submitting invalid credentials shows an inline error and stays on `/admin/login` —
+  no partial access.~~
+- ~~Demo that the dashboard shell shows nav entries for Projects, Blog, Resume, and Messages (the
   destinations don't need to be built yet — that's stories `003`–`006`) plus a working Logout
-  action.
-- Demo that after logging out, visiting `/admin` again redirects back to `/admin/login` — no
-  stale session access.
-- Demo that the admin shell never renders the public site's header, footer, custom cursor, or
-  marquee — it's a visibly separate layout, not the public `Layout.tsx` reused.
+  action.~~
+- ~~Demo that after logging out, visiting `/admin` again redirects back to `/admin/login` — no
+  stale session access.~~
+- ~~Demo that the admin shell never renders the public site's header, footer, custom cursor, or
+  marquee — it's a visibly separate layout, not the public `Layout.tsx` reused.~~

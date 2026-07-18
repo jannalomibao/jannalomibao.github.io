@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Env files (VITE_SUPABASE_* — local dev defaults are harmless, but don't
+# reflexively commit env files as a habit)
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
