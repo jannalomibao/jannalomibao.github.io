@@ -3,6 +3,8 @@
 Personal portfolio for Janna Lomibao — software developer career site (recruiter-facing
 projects, writing, resume, contact). Live at **<https://jannalomibao.github.io/>**.
 
+![Sitemap and user flow overview](docs/assets/overview-image.png)
+
 ## Repo layout
 
 ```text

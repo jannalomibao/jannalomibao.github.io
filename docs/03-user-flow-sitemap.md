@@ -2,6 +2,10 @@
 
 Related: [PRD](02-prd.md)
 
+![Sitemap and user flow overview — public visitor flow (Home, About, Projects, Blog, Resume,
+Contact) and the auth-gated admin flow (login, dashboard, manage projects/blog/resume,
+messages)](assets/overview-image.png)
+
 ## 1. Sitemap
 
 ```mermaid
