@@ -30,6 +30,8 @@ what's built vs. still planned. Individual docs:
 - [API Contract](docs/07-api-contract.md) — request/response schemas, validation, error format,
   and rate limits for every backend endpoint — all implemented except resume PDF upload
 - [Code reviews](docs/code-reviews/) — dated reports from the project's `/code-review` skill
+- [Feature stories](docs/tasks/) — one file per feature, drafted via the project's `/new-story`
+  skill from [`docs/templates/01-story-template.md`](docs/templates/01-story-template.md)
 
 ## Local setup
 
@@ -87,6 +89,12 @@ configuration (turns on GitHub Pages with "GitHub Actions" as the build source) 
 re-running if you change *how* Pages is configured, not on every deploy.
 
 ## Things to remember
+
+- **A newly-created/edited project skill (`.claude/skills/*/SKILL.md`) may not resolve in the
+  same session you created it in.** Confirmed with `/code-review` — it kept loading the
+  built-in generic skill even after the project override existed, in the same conversation. If
+  a project skill (including `/new-story`) doesn't seem to take effect right after creating it,
+  try a fresh session before assuming the file is wrong.
 
 - **Repo name is load-bearing.** This must stay named exactly `jannalomibao.github.io` — GitHub
   only serves a repo at the bare domain root (instead of `/repo-name/`) when the name matches
