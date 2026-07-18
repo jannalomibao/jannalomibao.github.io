@@ -8,7 +8,7 @@ projects, writing, resume, contact). Live at **<https://jannalomibao.github.io/>
 ```text
 docs/       Planning docs — PRD, user flow/sitemap, design system, user stories, architecture
 frontend/   The actual site: React + Vite + TypeScript + Tailwind CSS v4
-backend/    NestJS API — public read routes only so far (see docs/07-api-contract.md)
+backend/    NestJS API — public reads, admin auth + CRUD, contact (see docs/07-api-contract.md)
 supabase/   Supabase CLI config + SQL migrations (schema source of truth)
 devops/     Deployment infra: Terraform (GitHub Pages config) + the deploy script
 .github/    GitHub Actions workflow that builds and deploys the frontend on push
@@ -25,9 +25,10 @@ what's built vs. still planned. Individual docs:
 - [User Stories & UAC](docs/05-user-stories.md) — every requirement broken into stories with
   acceptance criteria, technical approach, and honest build status per story
 - [Architecture & Infrastructure](docs/06-architecture-infrastructure.md) — NestJS + Supabase +
-  Docker plan; `backend/` implements steps 1–2 of its sequencing plan so far
+  Docker plan; `backend/` implements steps 1–5 of its sequencing plan (public reads, admin auth,
+  admin CRUD), step 6 (contact) done except real email delivery
 - [API Contract](docs/07-api-contract.md) — request/response schemas, validation, error format,
-  and rate limits for every backend endpoint (public read routes implemented; admin/contact not yet)
+  and rate limits for every backend endpoint — all implemented except resume PDF upload
 - [Code reviews](docs/code-reviews/) — dated reports from the project's `/code-review` skill
 
 ## Local setup
@@ -55,12 +56,17 @@ See [`frontend/README.md`](frontend/README.md) for the file structure and where 
 
 ```bash
 supabase start                 # local Postgres/Auth/Storage stack
+cp .env.example .env            # then set ADMIN_USER_ID (see backend/README.md "Admin auth")
 docker compose up --build      # frontend :5173, backend :3000
 ```
 
-See [`backend/README.md`](backend/README.md) for backend-only setup (no Docker), schema-change
-workflow, and a few real gotchas hit while building it (worth reading before touching
-`Dockerfile` or `prisma/schema.prisma`).
+`docker compose up` fails fast with a clear message if `ADMIN_USER_ID` isn't set — there's no
+usable default since it's the specific owner account id created on your machine.
+
+See [`backend/README.md`](backend/README.md) for backend-only setup (no Docker), how to create
+the local admin account and get a token to test admin routes, schema-change workflow, and a few
+real gotchas hit while building it (worth reading before touching `Dockerfile`,
+`prisma/schema.prisma`, or `admin.guard.ts`).
 
 ## Deploying
 
@@ -106,12 +112,18 @@ re-running if you change *how* Pages is configured, not on every deploy.
   don't delete it carelessly, and don't run `terraform apply` from a second machine without
   copying state over first (or it'll try to recreate resources that already exist).
 
-- **Backend is partial — public reads only.** `backend/` implements `GET /api/projects`,
-  `/api/projects/:slug`, `/api/posts`, `/api/posts/:slug`, `/api/resume`, `/api/resume/pdf`
-  against a real Postgres schema (`supabase/migrations/`). The frontend doesn't call any of it
-  yet — it's still entirely on mock data (`frontend/src/data/content.ts`; contact form just
-  simulates success) — that wiring is User Story 7.2, not done. Admin auth/CRUD and the contact
-  endpoint (architecture doc §11 steps 4–6) aren't built either.
+- **Backend has public reads, admin auth + CRUD, and contact — but the frontend calls none of
+  it.** `backend/` implements the full API contract against a real Postgres schema
+  (`supabase/migrations/`) except resume PDF upload and real email delivery (contact
+  notifications currently log a stub). Every route has been exercised with real HTTP requests
+  against a running local Supabase stack, including auth failure modes and the containerized
+  path — not just written and assumed correct. The frontend is still entirely on mock data
+  (`frontend/src/data/content.ts`; contact form just simulates success) and there's no admin UI
+  at all — that's User Story 7.2 and the rest of Epic 6, not done.
+
+- **Admin auth is JWKS-based (asymmetric), not a shared secret.** This was wrong in an earlier
+  version and only caught by testing against a real locally-issued token — see `backend/README.md`
+  "Admin auth" and "Gotchas" before touching `backend/src/auth/admin.guard.ts`.
 
 - **Design system is descriptive, not aspirational.** `docs/04-design-system.md` documents
   what's actually in the code (colors, type scale, component patterns). If you change a token

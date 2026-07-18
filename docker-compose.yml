@@ -18,6 +18,15 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:54322/postgres?schema=public}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
       PORT: 3000
+      # host.docker.internal, not 127.0.0.1 — same reasoning as DATABASE_URL
+      # above: 127.0.0.1 inside the container is the container itself, not
+      # the host machine where `supabase start`'s Auth service listens.
+      SUPABASE_URL: ${SUPABASE_URL:-http://host.docker.internal:54321}
+      # No usable default — this is the specific admin user id created on
+      # your machine (backend/README.md "Admin auth"). Set it in a root
+      # .env file (docker compose loads one automatically) or export it
+      # before running `docker compose up`.
+      ADMIN_USER_ID: ${ADMIN_USER_ID:?ADMIN_USER_ID must be set — see backend/README.md}
     extra_hosts:
       # host.docker.internal works out of the box on Docker Desktop
       # (Mac/Windows); this makes it resolve on Linux too.

@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ResumeController } from './resume.controller';
+import { AdminResumeController, ResumeController } from './resume.controller';
 import { ResumeService } from './resume.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  controllers: [ResumeController],
+  imports: [AuthModule],
+  controllers: [ResumeController, AdminResumeController],
   providers: [ResumeService],
 })
 export class ResumeModule {}

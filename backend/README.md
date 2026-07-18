@@ -4,9 +4,11 @@ NestJS API for the portfolio. See the [root README](../README.md) for the whole 
 [`docs/06-architecture-infrastructure.md`](../docs/06-architecture-infrastructure.md) /
 [`docs/07-api-contract.md`](../docs/07-api-contract.md) for the design this implements.
 
-**Status:** public read routes only (`GET /api/projects`, `/api/projects/:slug`, `/api/posts`,
-`/api/posts/:slug`, `/api/resume`, `/api/resume/pdf`) — architecture doc §11 steps 1–2. Admin
-auth/CRUD and the contact endpoint (steps 4–6) aren't built yet.
+**Status:** public read routes, admin auth, admin CRUD for projects/posts/resume, and contact
+(public submit + admin management) are all built — architecture doc §11 steps 1–6, all except
+resume PDF upload (`POST /api/admin/resume/pdf` — needs Supabase Storage integration, not done)
+and real email delivery on new contact submissions (currently logs a stub instead of calling a
+provider). Nothing here is wired to the frontend yet (still on mock data — Epic 7.2).
 
 ## Local setup
 
@@ -40,6 +42,30 @@ docker compose up --build
 Runs both `frontend` (`:5173`) and `backend` (`:3000`) in containers, pointed at the local
 Supabase stack via `host.docker.internal`. See the root [`docker-compose.yml`](../docker-compose.yml).
 
+## Admin auth
+
+There's exactly one admin account, created directly in Supabase Auth (no sign-up flow anywhere
+in the app). Locally:
+
+```bash
+# 1. Create the owner account (once). Uses the local service_role key from `supabase status`.
+curl -X POST "http://127.0.0.1:54321/auth/v1/admin/users" \
+  -H "apikey: <SERVICE_ROLE_KEY>" -H "Authorization: Bearer <SERVICE_ROLE_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"owner@local.dev","password":"<pick one>","email_confirm":true}'
+# Response includes "id" — that's ADMIN_USER_ID. Put it in .env.
+
+# 2. Get a bearer token to test admin routes with:
+curl -X POST "http://127.0.0.1:54321/auth/v1/token?grant_type=password" \
+  -H "apikey: <ANON_KEY>" -H "Content-Type: application/json" \
+  -d '{"email":"owner@local.dev","password":"<what you picked>"}'
+# Use the "access_token" field: -H "Authorization: Bearer <token>"
+```
+
+`AdminGuard` (`src/auth/admin.guard.ts`) verifies the token against Supabase's JWKS endpoint
+and checks the `sub` claim matches `ADMIN_USER_ID` exactly — not a role system, since there's
+only ever one admin (PRD non-goal: no multi-author support).
+
 ## Schema changes
 
 The SQL migrations in [`../supabase/migrations/`](../supabase/migrations/) are the source of
@@ -72,3 +98,11 @@ why NestJS/SQL owns the schema instead of Prisma's own migration flow.
 - **Public routes strip `published`/draft fields entirely** (not just `false`) — see
   `toPublic()` in `projects.service.ts`/`posts.service.ts`, and the reasoning in
   `docs/07-api-contract.md` §3 (never let an unauthenticated caller learn a draft exists).
+- **Admin tokens are verified via JWKS (asymmetric ES256), not a shared JWT secret.** This was
+  wrong in an earlier version of this guard — it assumed the legacy shared-secret scheme, which
+  failed against a real locally-issued token the first time it was actually tested. Confirmed by
+  decoding a real token's header (`alg: ES256`, has a `kid`) rather than assumed from docs.
+- **`docker compose up` needs `ADMIN_USER_ID` set** (root `.env`, since Docker Compose auto-loads
+  one) and uses `SUPABASE_URL=http://host.docker.internal:54321`, not `127.0.0.1` — same
+  container-networking reasoning as `DATABASE_URL`. Missing `ADMIN_USER_ID` fails fast at
+  `docker compose up` with a clear message instead of a 500 the first time an admin route is hit.

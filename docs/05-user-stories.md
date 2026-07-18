@@ -142,7 +142,11 @@ screen, so that I can keep my portfolio current without touching code.
 `projects` table; admin UI reuses the public `ProjectCard`/`ProjectDetail` layout in a
 preview-safe way. Full schema/API contract lives in the architecture doc.
 
-**Status:** ⬜ Not started.
+**Status:** 🟡 Partial — the API is done and verified end-to-end (`POST`/`PATCH`/`DELETE
+/api/admin/projects`, draft-until-published, slug immutability enforced, all against a real
+Supabase Postgres). No admin *screen* exists yet — this story's UAC talks about "an admin
+screen," which is still frontend work, and the public Projects page still can't show this data
+either way since it's on mock data until Epic 7.2.
 
 ---
 
@@ -182,7 +186,10 @@ publishing doesn't require a PR and a deploy.
 editor is a plain textarea/structured form for v1 (no rich WYSIWYG requirement stated in the
 PRD) — revisit if real usage demands it.
 
-**Status:** ⬜ Not started.
+**Status:** 🟡 Partial — the API is done and verified end-to-end, including the specific rule
+that `publishedAt` is set once on first publish and never cleared by unpublishing (tested by
+publish → unpublish → re-publish and confirming the timestamp doesn't change). No admin screen
+or editor UI yet.
 
 ---
 
@@ -217,9 +224,15 @@ resume page and PDF stay current without a code change.
 - Given resume data changes, when the PDF is (re)generated or re-uploaded, then the downloadable
   PDF matches what's on the page (no stale mismatch between the two).
 
-**Technical approach:** NestJS `resume` module + Supabase `resume` table (single-row or
-versioned); PDF generation approach (server-rendered vs. re-upload flow) is an open decision —
-see PRD §10.
+**Technical approach:** NestJS `resume` module + Supabase `resume` table (single-row, per
+architecture doc §3). PDF is manual upload to Supabase Storage, not generated from CMS data —
+decided in architecture doc §9 (closing the PRD §10 open question).
+
+**Status:** 🟡 Partial — `PATCH /api/admin/resume` (summary/experience/education/skills, with
+nested validation on experience/education entries) is done and verified end-to-end. `POST
+/api/admin/resume/pdf` (the upload endpoint) isn't built yet — needs Supabase Storage
+integration — so the PDF-staying-in-sync half of this story's UAC isn't achievable yet. No admin
+screen either.
 
 **Status:** ⬜ Not started.
 
@@ -264,7 +277,12 @@ a Supabase `contact_submissions` table and triggers the notification side-effect
 /contact` + read/archive mutations are auth-gated. Rate limiting matters here specifically —
 it's the one public-facing write endpoint with no auth in front of it.
 
-**Status:** ⬜ Not started.
+**Status:** 🟡 Partial — persistence, the 5/hour rate limit (verified: exactly 5 requests
+succeed, the 6th gets `429` with a `Retry-After` header), and the admin list/filter/status-update
+routes are all done and verified end-to-end (including that `status` can only be set to `read`
+or `archived` via this route, never back to `unread`). The "notified via email" half of the UAC
+isn't done — the service logs a stub instead of calling a real provider (PRD §10's channel
+choice is decided — email, architecture doc §9 — but not implemented). No admin screen.
 
 ---
 
@@ -285,11 +303,16 @@ site content.
   no partial access.
 - Given I log out, when I try to revisit an admin route directly, then I'm sent back to login.
 
-**Technical approach:** Supabase Auth (email/password or magic link — resolve in architecture
-doc, PRD §10) issuing a session the NestJS API verifies on every admin request; frontend route
-guard wraps all `/admin/*` routes and checks session state before rendering.
+**Technical approach:** Supabase Auth, single hardcoded owner account, email/password (decided
+in architecture doc §5/§9, closing the PRD §10 open question) issuing a JWT the NestJS API
+verifies on every admin request; frontend route guard wraps all `/admin/*` routes and checks
+session state before rendering.
 
-**Status:** ⬜ Not started.
+**Status:** 🟡 Partial — the backend half is done: `AdminGuard` verifies real Supabase-issued
+tokens against Supabase's JWKS (confirmed against an asymmetric ES256 token from an actual local
+login, not assumed) and checks the token's `sub` against the one known owner id, returning 401
+for missing/invalid/expired tokens and 403 for a valid-but-wrong-user token — both verified with
+real requests, not just written. No frontend login screen or route guard yet.
 
 ### 6.2 No content mutation without auth
 **Story:** As the site owner, I want it to be structurally impossible to change content without
@@ -306,7 +329,12 @@ logging in, so a bug in the frontend UI can't accidentally expose a public write
 enforced server-side, not just hidden client-side, per NFR-3. This is the story that makes
 NFR-3 testable independent of the UI.
 
-**Status:** ⬜ Not started.
+**Status:** ✅ Done — every admin route (`/api/admin/projects`, `/api/admin/posts`,
+`/api/admin/resume`, `/api/admin/contact`, all methods) is behind `AdminGuard` at the controller
+level, not per-method, so a new admin endpoint is protected by default. Verified by calling every
+mutating route with no token, a malformed token, and a valid-but-wrong-user token — there is no
+frontend yet to hide anything behind, which makes this story's premise ("even if the frontend
+UI has a bug") trivially and fully true right now.
 
 ---
 
@@ -359,15 +387,18 @@ backend exists.
 | Epic | Stories | Status |
 |---|---|---|
 | 1. Public Site Shell & Navigation | 4 | 3 Done, 1 Partial |
-| 2. Projects Showcase | 3 | 2 Done (mock data), 1 Not started |
-| 3. Blog / Writing | 2 | 1 Done (mock data), 1 Not started |
-| 4. Resume / CV | 2 | 1 Partial, 1 Not started |
-| 5. Contact | 2 | 1 Partial, 1 Not started |
-| 6. Admin Authentication | 2 | Not started |
+| 2. Projects Showcase | 3 | 2 Done (mock data), 1 Partial (API done, no admin UI) |
+| 3. Blog / Writing | 2 | 1 Done (mock data), 1 Partial (API done, no admin UI) |
+| 4. Resume / CV | 2 | 2 Partial (page + text-field API done; PDF upload & admin UI not) |
+| 5. Contact | 2 | 2 Partial (form + submission/admin API done; email & admin UI not) |
+| 6. Admin Authentication | 2 | 1 Partial (guard done, no login UI), 1 Done |
 | 7. Data & API Foundation | 2 | 1 Done, 1 Not started |
 
-Everything marked Done or Partial exists in `frontend/` and/or `backend/` today (public read
-routes for projects/posts/resume now work end-to-end against real Postgres — see `backend/`).
-The frontend doesn't call any of it yet (7.2), so nothing visitor-facing has changed. Everything
-else Not started follows the sequencing plan in
-[Architecture & Infrastructure §11](06-architecture-infrastructure.md#11-sequencing).
+Everything marked Done or Partial exists in `frontend/` and/or `backend/` today. As of this
+update, `backend/` has real, individually-verified public read routes, admin CRUD for
+projects/posts/resume, and contact submission + admin management — all tested against a running
+local Supabase stack with real HTTP requests (including auth failure modes: missing token,
+malformed token, valid-but-wrong-user token) and, for the containerized path, an actual `docker
+compose up` run — not written and assumed correct. What's still missing everywhere: any frontend
+admin UI, the frontend actually calling any of this instead of mock data (7.2), resume PDF
+upload, and real email delivery on contact submissions (currently a logged stub).

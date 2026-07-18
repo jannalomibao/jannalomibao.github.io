@@ -2,6 +2,13 @@
 .DS_Store
 *.swp
 
+# Env files (each package also has its own more specific .gitignore; this
+# catches the root-level .env docker-compose reads for local overrides)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
 # Terraform (each module dir also has its own, this catches any stray state)
 **/.terraform/
 *.tfstate
