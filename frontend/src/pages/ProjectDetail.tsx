@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { GithubIcon } from "@/components/ui/BrandIcons";
 import { projects } from "@/data/content";
 import Reveal from "@/components/ui/Reveal";
+import ParallaxImage from "@/components/ui/ParallaxImage";
 
 export default function ProjectDetail() {
   const { slug } = useParams();
@@ -63,8 +64,12 @@ export default function ProjectDetail() {
         </div>
       </Reveal>
 
-      <Reveal delay={0.1} className="mt-16 rounded-2xl overflow-hidden aspect-video">
-        <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+      <Reveal delay={0.1} className="mt-16">
+        <ParallaxImage
+          src={project.image}
+          alt={project.title}
+          className="rounded-2xl aspect-video"
+        />
       </Reveal>
 
       <div className="grid md:grid-cols-3 gap-10 mt-20">

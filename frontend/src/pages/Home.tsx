@@ -5,6 +5,7 @@ import { profile, projects } from "@/data/content";
 import ProjectCard from "@/components/ui/ProjectCard";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
+import ParallaxImage from "@/components/ui/ParallaxImage";
 
 const container: Variants = {
   hidden: {},
@@ -145,13 +146,11 @@ export default function Home() {
           </Link>
         </Reveal>
         <Reveal delay={0.1}>
-          <div className="rounded-2xl overflow-hidden aspect-[4/5]">
-            <img
-              src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop"
-              alt="Workspace"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <ParallaxImage
+            src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop"
+            alt="Workspace"
+            className="rounded-2xl aspect-[4/5]"
+          />
         </Reveal>
       </section>
     </>

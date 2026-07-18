@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { posts } from "@/data/content";
 import Reveal from "@/components/ui/Reveal";
+import ParallaxImage from "@/components/ui/ParallaxImage";
 
 export default function Blog() {
   return (
@@ -24,12 +25,12 @@ export default function Blog() {
               data-cursor-hover
               className="group flex flex-col md:flex-row md:items-center gap-6 py-10"
             >
-              <div className="w-full md:w-56 aspect-[4/3] rounded-xl overflow-hidden shrink-0">
-                <img
+              <div className="w-full md:w-56 shrink-0">
+                <ParallaxImage
                   src={post.image}
                   alt={post.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="aspect-[4/3] rounded-xl"
+                  imgClassName="transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
               <div className="flex-1">

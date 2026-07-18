@@ -1,6 +1,7 @@
 import { profile } from "@/data/content";
 import Reveal from "@/components/ui/Reveal";
 import SectionHeading from "@/components/ui/SectionHeading";
+import ParallaxImage from "@/components/ui/ParallaxImage";
 
 export default function About() {
   return (
@@ -25,13 +26,11 @@ export default function About() {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="rounded-2xl overflow-hidden aspect-[4/5]">
-            <img
-              src="https://images.unsplash.com/photo-1483058712412-4245e9b90334?q=80&w=1200&auto=format&fit=crop"
-              alt="Desk setup"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <ParallaxImage
+            src="https://images.unsplash.com/photo-1483058712412-4245e9b90334?q=80&w=1200&auto=format&fit=crop"
+            alt="Desk setup"
+            className="rounded-2xl aspect-[4/5]"
+          />
         </Reveal>
       </div>
 

@@ -11,6 +11,7 @@ frontend/   The actual site: React + Vite + TypeScript + Tailwind CSS v4
 backend/    NestJS API — public reads, admin auth + CRUD, contact (see docs/07-api-contract.md)
 supabase/   Supabase CLI config + SQL migrations (schema source of truth)
 devops/     Deployment infra: Terraform (GitHub Pages config) + the deploy script
+e2e/        Playwright end-to-end tests (per-story, written by the `/build` skill)
 .github/    GitHub Actions workflow that builds and deploys the frontend on push
 docker-compose.yml   Local dev orchestration for frontend + backend
 ```
@@ -33,7 +34,8 @@ what's built vs. still planned. Individual docs:
 - [Feature stories](docs/tasks/) — one file per feature, drafted via the project's `/new-story`
   skill from [`docs/templates/01-story-template.md`](docs/templates/01-story-template.md).
   `/build {task_id}` implements one end to end (backend → frontend → tests) and moves it to
-  `docs/tasks/done/` when its UACs are verified — see `docs/tasks/000-progress.md` once it exists.
+  [`docs/tasks/done/`](docs/tasks/done/) when its UACs are verified — see
+  [`docs/tasks/000-progress.md`](docs/tasks/000-progress.md) for the changelog and what's left.
 
 ## Local setup
 
@@ -72,6 +74,19 @@ the local admin account and get a token to test admin routes, schema-change work
 real gotchas hit while building it (worth reading before touching `Dockerfile`,
 `prisma/schema.prisma`, or `admin.guard.ts`).
 
+### End-to-end tests
+
+```bash
+cd e2e
+npm install && npx playwright install chromium   # once
+npx playwright test         # frontend dev server auto-starts if not already running
+npx playwright show-report  # view the HTML report
+```
+
+Written per-story by the `/build` skill against `docs/tasks/`, covering both a desktop and a
+mobile viewport for every spec. See [`docs/tasks/000-progress.md`](docs/tasks/000-progress.md)
+for what's been built and verified so far.
+
 ## Deploying
 
 Full one-time setup and troubleshooting live in [`devops/README.md`](devops/README.md). Short
@@ -97,6 +112,12 @@ re-running if you change *how* Pages is configured, not on every deploy.
   built-in generic skill even after the project override existed, in the same conversation. If
   a project skill (including `/new-story` or `/build`) doesn't seem to take effect right after
   creating it, try a fresh session before assuming the file is wrong.
+
+- **`ParallaxImage` puts its scroll-driven `translateY` on a wrapping `motion.div`, never on the
+  same element as a Tailwind `transform` class (e.g. `group-hover:scale-105`).** Framer Motion
+  writes its own inline `style.transform`, which silently clobbers a CSS-class-driven transform
+  on the same element rather than composing with it. Two separate elements, each owning one
+  transform, is the fix — don't collapse them to "simplify" the component.
 
 - **Repo name is load-bearing.** This must stay named exactly `jannalomibao.github.io` — GitHub
   only serves a repo at the bare domain root (instead of `/repo-name/`) when the name matches

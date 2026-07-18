@@ -62,16 +62,22 @@ flowchart TD
 
 ## UACs
 
-- Demo that scrolling past the Home "About teaser" image shows it drifting at a visibly
-  different (slower) rate than the surrounding text as it crosses the viewport.
-- Demo that the same holds for the About page photo, every `ProjectCard` image on Home and
+All six verified by `e2e/tests/001-scroll-parallax-images.spec.ts`, run against both a desktop
+and a mobile viewport (Playwright's `chromium` and `mobile-chromium` projects) — 20/20 passing.
+
+- ~~Demo that scrolling past the Home "About teaser" image shows it drifting at a visibly
+  different (slower) rate than the surrounding text as it crosses the viewport.~~
+- ~~Demo that the same holds for the About page photo, every `ProjectCard` image on Home and
   Projects, the `ProjectDetail` hero image, and the Blog list + `BlogDetail` images — site-wide,
-  not just one page.
-- Demo that the drift stays subtle (roughly 10–30px) — comparable in restraint to the existing
-  `Reveal` scroll-entrance animation, not a dramatic depth effect.
-- Demo that every image stays correctly clipped inside its existing rounded aspect-ratio box at
-  every scroll position — no image ever visibly escapes its container or causes a layout shift.
-- Demo that with the OS "reduce motion" setting enabled, images render fully static (no
-  translateY drift) while remaining otherwise identical and fully visible.
-- Demo that scrolling the Projects or Blog list (the pages with the most images on screen at
-  once) stays smooth on both a desktop browser and a mobile viewport size, with no visible jank.
+  not just one page.~~
+- ~~Demo that the drift stays subtle (roughly 10–30px) — comparable in restraint to the existing
+  `Reveal` scroll-entrance animation, not a dramatic depth effect.~~
+- ~~Demo that every image stays correctly clipped inside its existing rounded aspect-ratio box at
+  every scroll position — no image ever visibly escapes its container or causes a layout shift.~~
+- ~~Demo that with the OS "reduce motion" setting enabled, images render fully static (no
+  translateY drift) while remaining otherwise identical and fully visible.~~
+- ~~Demo that scrolling the Projects or Blog list (the pages with the most images on screen at
+  once) stays smooth on both a desktop browser and a mobile viewport size, with no visible jank.~~
+  Verified as a proxy (zero console/page errors and the page stays interactive through a scroll
+  burst on both viewports) — this is not a literal frame-timing/jank measurement, which would
+  need performance-trace tooling beyond a reasonable Playwright assertion.

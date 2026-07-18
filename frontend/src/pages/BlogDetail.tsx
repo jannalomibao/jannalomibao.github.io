@@ -2,6 +2,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { posts } from "@/data/content";
 import Reveal from "@/components/ui/Reveal";
+import ParallaxImage from "@/components/ui/ParallaxImage";
 
 export default function BlogDetail() {
   const { slug } = useParams();
@@ -33,8 +34,12 @@ export default function BlogDetail() {
         </h1>
       </Reveal>
 
-      <Reveal delay={0.1} className="mt-12 rounded-2xl overflow-hidden aspect-video">
-        <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
+      <Reveal delay={0.1} className="mt-12">
+        <ParallaxImage
+          src={post.image}
+          alt={post.title}
+          className="rounded-2xl aspect-video"
+        />
       </Reveal>
 
       <Reveal delay={0.15} className="mt-12 space-y-6 text-lg text-ink-soft leading-relaxed">

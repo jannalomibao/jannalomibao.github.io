@@ -96,7 +96,9 @@ verbatim (see `SectionHeading.tsx` and the repeated markup at the top of each pa
   — placeholder imagery only, to be replaced with real project screenshots / personal photos.
 - **Treatment:** always `object-cover` inside a fixed-aspect container (`aspect-[4/3]`,
   `aspect-[4/5]`, `aspect-video`), always rounded (`rounded-xl`/`rounded-2xl`), never raw
-  `<img>` without a wrapping aspect box — this keeps layouts stable while loading.
+  `<img>` without a wrapping aspect box — this keeps layouts stable while loading. In practice
+  this box + `<img>` pairing is the `ParallaxImage` component (§8), not a hand-rolled div/img —
+  use it for any new image rather than reimplementing the pattern.
 - **Hover treatment (project/blog cards only):** subtle scale on hover
   (`group-hover:scale-105`, 700ms ease) plus a soft ink overlay tint — never on static/hero
   imagery.
@@ -146,6 +148,7 @@ border-line`, hover → filled `bg-ink text-paper`). Present on every page via t
 | Custom cursor | `Cursor.tsx` — 14px dot, `mix-blend-mode: difference`, grows to 40px + accent fill over any `a`, `button`, or `[data-cursor-hover]` | Desktop only (`hidden` below `md:`); mark any new clickable custom element with `data-cursor-hover` |
 | Easing | `[0.22, 1, 0.36, 1]` (a soft ease-out) | The one easing curve used everywhere — don't introduce a different curve without reason |
 | Skills marquee | CSS `@keyframes marquee`, infinite linear scroll, 28s | Home page only |
+| Scroll parallax | `ParallaxImage` component (Framer Motion `useScroll` + `useTransform`, `±15px` default) | Site-wide on every image (docs/tasks/done/001-scroll-parallax-images.md). Offset lives on a wrapping element, never the same node as a `group-hover:scale-*` Tailwind class — see root README "Things to remember". Disabled under `prefers-reduced-motion`. |
 
 ## 9. Texture
 

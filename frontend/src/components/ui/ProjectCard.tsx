@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import type { Project } from "@/data/content";
+import ParallaxImage from "@/components/ui/ParallaxImage";
 
 export default function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
@@ -9,18 +10,17 @@ export default function ProjectCard({ project, index }: { project: Project; inde
       className="group block"
       data-cursor-hover
     >
-      <div className="relative overflow-hidden rounded-2xl aspect-[4/3] bg-ink/5">
-        <img
-          src={project.image}
-          alt={project.title}
-          loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-        />
+      <ParallaxImage
+        src={project.image}
+        alt={project.title}
+        className="rounded-2xl aspect-[4/3] bg-ink/5"
+        imgClassName="transition-transform duration-700 ease-out group-hover:scale-105"
+      >
         <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/10 transition-colors duration-500" />
         <span className="absolute top-4 left-4 text-xs tracking-widest uppercase bg-paper/90 px-3 py-1 rounded-full text-ink">
           {String(index + 1).padStart(2, "0")}
         </span>
-      </div>
+      </ParallaxImage>
 
       <div className="mt-5 flex items-start justify-between gap-4">
         <div>
