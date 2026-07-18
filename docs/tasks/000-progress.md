@@ -6,6 +6,37 @@ at that moment — don't hand-edit either section, they'll be overwritten by the
 
 ## Changelog
 
+### 2026-07-18 — 003: Admin manage projects (partial — stays open)
+
+Full admin CRUD UI at `/admin/projects` (list, `/admin/projects/new`, `/admin/projects/:id`)
+consuming the already-built `GET/POST/PATCH/DELETE /api/admin/projects` endpoints — new shared
+`frontend/src/admin/api/client.ts` (auth-aware fetch wrapper, attaches the Supabase session JWT,
+normalizes the API's error shape) reused by every remaining admin story, plus two new shared
+components (`TagInput`, `ConfirmDeleteButton`) also meant for reuse in `004`–`006`.
+
+- **Tests:** 46/46 passing across the whole suite (12/12 for this story specifically,
+  `chromium` + `mobile-chromium`). No unit tests — no isolable logic beyond what Playwright
+  already proves against the real API.
+- **Two rounds of real test bugs, not app bugs, caught and fixed:** (1) test titles literally
+  containing the word "Draft" collided with the status-indicator text in a substring match, and
+  inconsistent DOM-parent depth (`..` vs `../..`) when locating a row; (2) `getByLabel
+  ("Published")` was ambiguous against the list page's status dot (which also carries
+  `aria-label="Published"`) — fixed by scoping to `getByRole("checkbox", { name: "Published" })`,
+  which correctly excludes non-form elements.
+- **Significant finding, not specific to this story:** the public `/projects` page still renders
+  from mock data (Epic 7.2, not done) — confirmed directly (created + published a project via
+  the admin UI, hit `GET /api/projects` and saw it, loaded the public `/projects` page and did
+  not). Half of this story's UACs literally reference "the public page," which can't be
+  meaningfully demonstrated yet — tested the real underlying guarantee (the public API) instead
+  where that was the case. **This will recur identically for `004` (Blog)** and its "appears on
+  `/blog`" UACs — worth prioritizing Epic 7.2 before or alongside further admin stories, so
+  `004`–`006` don't all land in the same partially-open state.
+- **UACs:** 3/6 confirmed and struck through (list indicator, duplicate-slug validation, locked
+  slug on edit). 3/6 blocked on Epic 7.2 as described above — left un-struck with a note in the
+  story file explaining exactly what was and wasn't verified for each.
+- **Status:** stays in `docs/tasks/003-admin-manage-projects.md` (not moved to `done/` — not all
+  UACs are confirmed).
+
 ### 2026-07-18 — 002: Admin login + dashboard shell
 
 Foundational admin screens: `/admin/login` (Supabase Auth email/password via `@supabase/supabase-js`,
@@ -48,15 +79,20 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
 
 ## Remaining
 
-- [`003-admin-manage-projects.md`](003-admin-manage-projects.md) — admin CRUD UI for projects
-  (create/edit/publish/delete), consuming the already-verified `/api/admin/projects` endpoints.
+- [`003-admin-manage-projects.md`](003-admin-manage-projects.md) — **3/6 UACs open.** Admin CRUD
+  UI is built and working; the 3 open UACs are all blocked on Epic 7.2 (public `/projects` page
+  not wired to real data), not on anything left to build here.
 - [`004-admin-manage-blog.md`](004-admin-manage-blog.md) — admin CRUD UI for blog posts,
-  including the publish-once `publishedAt` rule.
+  including the publish-once `publishedAt` rule. **Expect the same Epic 7.2 blocker** for its
+  "appears on `/blog`" UACs — see `003`'s changelog entry above.
 - [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — admin edit form for resume
   summary/experience/education/skills. PDF upload explicitly out of scope (backend not built).
+  Likely hits the same Epic 7.2 blocker for its "reflects on `/resume`" UAC.
 - [`006-admin-manage-messages.md`](006-admin-manage-messages.md) — admin list/filter/status-update
-  UI for contact form submissions.
+  UI for contact form submissions. No public-page dependency (messages are admin-only), so this
+  one shouldn't hit the Epic 7.2 blocker.
 
-All four depend on `002` (done) for the dashboard shell they mount inside, and are ordered by
+`004`–`006` depend on `002` (done) for the dashboard shell they mount inside, and are ordered by
 priority per the PRD's success metric (Projects/Blog named explicitly; Resume/Messages are
-supporting).
+supporting). Worth prioritizing Epic 7.2 (wiring the public site to real data) before continuing
+further down this list, so `004`/`005` don't land in the same partially-open state as `003`.

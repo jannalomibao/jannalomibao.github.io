@@ -23,11 +23,23 @@ export default defineConfig({
       use: { ...devices["Pixel 7"] },
     },
   ],
-  webServer: {
-    command: "npm run dev -- --port 5173 --strictPort",
-    cwd: "../frontend",
-    url: "http://localhost:5173",
-    reuseExistingServer: true,
-    timeout: 30_000,
-  },
+  // Supabase is NOT started here — it's its own Docker Compose stack (run
+  // `supabase start` first, see backend/README.md). webServer only manages
+  // plain `npm run` processes.
+  webServer: [
+    {
+      command: "npm run dev -- --port 5173 --strictPort",
+      cwd: "../frontend",
+      url: "http://localhost:5173",
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+    {
+      command: "npm run start:dev",
+      cwd: "../backend",
+      url: "http://localhost:3000/api/resume",
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+  ],
 });

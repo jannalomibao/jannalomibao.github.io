@@ -62,16 +62,34 @@ flowchart TD
 
 ## UACs
 
-- Demo that `/admin/projects` lists every project including unpublished drafts, with a visible
-  published/draft indicator per row.
+**Status: 3/6 fully confirmed. 3/6 blocked** by a pre-existing gap discovered while testing this
+story, not something introduced by it: the public `/projects` page still renders from
+`frontend/src/data/content.ts` mock data — it has never been wired to the real API (Epic 7.2,
+[`docs/05-user-stories.md`](../05-user-stories.md) 7.2, still Not started). Every UAC below that
+literally references "the public `/projects` page" or "the public site" can't be demonstrated
+against the actual rendered page right now — asserting a draft "doesn't appear" there would be
+vacuously true, since *nothing* admin-created appears there yet, published or not. Where that's
+the case, `e2e/tests/003-admin-manage-projects.spec.ts` verifies the real, non-vacuous guarantee
+instead — the public API (`GET /api/projects`) — which is exactly what the public page will
+start reflecting automatically once Epic 7.2 lands, with zero further admin-side changes needed.
+See `docs/tasks/000-progress.md` for the full note. This story is **not** moved to `done/` while
+any UAC remains open.
+
+- ~~Demo that `/admin/projects` lists every project including unpublished drafts, with a visible
+  published/draft indicator per row.~~
 - Demo that creating a new project with valid fields adds it to the list as a draft
   (`published: false`) by default, and it does **not** appear on the public `/projects` page.
+  **Partially confirmed:** draft-by-default in the admin list, and exclusion from `GET
+  /api/projects`, both verified. The public *page* claim is blocked (see note above).
 - Demo that toggling `published` on an existing project makes it appear on the public
   `/projects` page immediately (no rebuild), and toggling it back off removes it from public
-  view immediately.
-- Demo that submitting a duplicate or malformed slug on create shows the exact validation error
-  the API returns, not a generic failure message.
-- Demo that the slug field is locked/uneditable when editing an existing project, matching the
-  API's immutable-slug rule.
+  view immediately. **Confirmed at the API level** (`GET /api/projects` reflects the toggle
+  immediately, both directions) — the public *page* claim is blocked (see note above).
+- ~~Demo that submitting a duplicate or malformed slug on create shows the exact validation error
+  the API returns, not a generic failure message.~~
+- ~~Demo that the slug field is locked/uneditable when editing an existing project, matching the
+  API's immutable-slug rule.~~
 - Demo that deleting a project requires a confirmation step, then removes it from both the admin
-  list and the public site.
+  list and the public site. **Partially confirmed:** confirmation step and removal from the
+  admin list, and from `GET /api/projects`, both verified. The public *site* claim is blocked
+  (see note above).
