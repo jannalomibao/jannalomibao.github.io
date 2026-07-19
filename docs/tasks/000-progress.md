@@ -6,6 +6,38 @@ at that moment — don't hand-edit either section, they'll be overwritten by the
 
 ## Changelog
 
+### 2026-07-19 — 005: Admin manage resume (partial — stays open)
+
+Single edit form at `/admin/resume` (summary, repeatable experience/education rows with add/
+remove, skills via the shared `TagInput`), consuming `PATCH /api/admin/resume`. PDF upload is a
+disabled "coming soon" affordance, not a functional control, per the story's explicit scope cut
+(the upload endpoint doesn't exist yet — needs Supabase Storage).
+
+- **Tests:** 63/68 passing across the whole suite (5 skipped by design — see below). 5/5 for
+  this story on `chromium`.
+- **New concurrency concern specific to this story, handled deliberately:** unlike
+  projects/posts (one row per test, isolated by a unique slug), `resume` is a single shared row
+  — a save replaces the whole array, so two tests racing a save is a genuine read-modify-write
+  hazard, not hypothetical. Restricted this spec to the `chromium` project only (skipped on
+  `mobile-chromium`, accounting for the 5 skips) and forced serial execution within it. Every
+  other spec file is unaffected and still runs both projects.
+- **A real test-timing bug caught and fixed:** `page.goto()` doesn't wait for the form's async
+  `GET /api/resume` fetch — a snapshot query taken immediately after navigation could catch the
+  page mid-"Loading…" with zero row inputs in the DOM. Fixed by waiting for a row to actually be
+  visible first.
+- **A genuinely new finding, distinct from the Epic 7.2 pattern in `003`/`004`:** UAC 4
+  ("incomplete row shows a validation error") doesn't hold, but not for the usual reason —
+  confirmed directly that `ResumeExperienceDto`/`ResumeEducationDto` only validate *type*, not
+  *presence*: an *omitted* field correctly 400s with a row-specific message, but an *empty
+  string* (which is all the controlled-input form ever sends) silently 200s. The validation
+  mechanism works; the form just can't reach it. Not fixed here (backend DTO work, out of this
+  frontend-only story's scope) — documented precisely in the story file so it doesn't get
+  confused with the recurring public-page blocker.
+- **UACs:** 2/5 confirmed and struck through (pre-fill on load, no PDF upload control). 3/5
+  blocked — 2 on the familiar Epic 7.2 gap (public `/resume` page also still on mock data,
+  confirmed directly), 1 on the validation-looseness finding above.
+- **Status:** stays in `docs/tasks/005-admin-manage-resume.md` (not moved to `done/`).
+
 ### 2026-07-19 — 004: Admin manage blog (partial — stays open)
 
 Full admin CRUD UI at `/admin/blog` (list, `/admin/blog/new`, `/admin/blog/:id`), reusing
@@ -104,15 +136,18 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
 - [`004-admin-manage-blog.md`](004-admin-manage-blog.md) — **3/6 UACs open**, same shape and same
   root cause as `003` (public `/blog` page not wired to real data). Admin CRUD UI is built and
   working.
-- [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — admin edit form for resume
-  summary/experience/education/skills. PDF upload explicitly out of scope (backend not built).
-  Likely hits the same Epic 7.2 blocker for its "reflects on `/resume`" UAC.
+- [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — **3/5 UACs open.** 2 on the same
+  Epic 7.2 gap as `003`/`004`; 1 on a distinct finding (resume's nested DTOs only validate type,
+  not presence — the "incomplete row" validation error exists at the API level but the form can
+  never actually trigger it). Admin edit form itself is built and working. PDF upload
+  explicitly out of scope regardless (backend not built).
 - [`006-admin-manage-messages.md`](006-admin-manage-messages.md) — admin list/filter/status-update
   UI for contact form submissions. No public-page dependency (messages are admin-only), so this
   one shouldn't hit the Epic 7.2 blocker.
 
-**Two stories in a row have now landed partially-open on the identical Epic 7.2 blocker** (public
-site not wired to real data). `005` will very likely make it three. Strongly worth prioritizing
-Epic 7.2 itself next — a story doesn't exist for it yet in `docs/tasks/`, would need `/new-story`
-first — rather than continuing to `005`/`006` and accumulating a fourth/fifth partially-open
-story on the same root cause.
+**Three stories in a row have now landed partially-open on the identical Epic 7.2 blocker**
+(public site not wired to real data) — `003`, `004`, and `005` all have it. `006` is the last
+of the originally-planned admin stories and, per its own note above, likely won't hit it (no
+public-facing page for contact messages) — so it may be the first of these four to close out
+fully. Still, strongly worth prioritizing Epic 7.2 itself soon: a story doesn't exist for it yet
+in `docs/tasks/` and would need `/new-story` first.
