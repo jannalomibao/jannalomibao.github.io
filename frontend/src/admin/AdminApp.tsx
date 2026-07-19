@@ -7,6 +7,8 @@ import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProjectsList from "@/admin/projects/AdminProjectsList";
 import AdminProjectForm from "@/admin/projects/AdminProjectForm";
+import AdminBlogList from "@/admin/blog/AdminBlogList";
+import AdminBlogForm from "@/admin/blog/AdminBlogForm";
 
 // Everything admin-specific lives behind one lazy import in App.tsx
 // (`const AdminApp = lazy(() => import("@/admin/AdminApp"))`) so
@@ -24,10 +26,9 @@ export default function AdminApp() {
             <Route path="projects" element={<AdminProjectsList />} />
             <Route path="projects/new" element={<AdminProjectForm />} />
             <Route path="projects/:id" element={<AdminProjectForm />} />
-            <Route
-              path="blog"
-              element={<AdminComingSoon section="Blog" story="004" />}
-            />
+            <Route path="blog" element={<AdminBlogList />} />
+            <Route path="blog/new" element={<AdminBlogForm />} />
+            <Route path="blog/:id" element={<AdminBlogForm />} />
             <Route
               path="resume"
               element={<AdminComingSoon section="Resume" story="005" />}

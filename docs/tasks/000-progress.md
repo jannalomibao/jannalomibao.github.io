@@ -6,6 +6,25 @@ at that moment — don't hand-edit either section, they'll be overwritten by the
 
 ## Changelog
 
+### 2026-07-19 — 004: Admin manage blog (partial — stays open)
+
+Full admin CRUD UI at `/admin/blog` (list, `/admin/blog/new`, `/admin/blog/:id`), reusing
+`003`'s shared `admin/api/client.ts` and `ConfirmDeleteButton`. Enforces the create-mode-has-no-
+publish-toggle rule from the story (`CreatePostDto` has no `published` field on the backend at
+all — the form doesn't render a toggle in create mode rather than rendering one that would just
+get rejected).
+
+- **Tests:** 58/58 passing across the whole suite (12/12 for this story). All passed on the
+  first real run — applied the lessons from `003` upfront this time (correct row-locator DOM
+  depth, `getByRole("checkbox", ...)` instead of `getByLabel` to avoid colliding with the status
+  dot's `aria-label`, no literal status words in test titles) instead of discovering them again.
+- **Confirmed the identical Epic 7.2 blocker as `003`, checked directly rather than assumed:**
+  the public `/blog` page also imports straight from mock data, no API call. Same treatment as
+  `003` — UACs literally about "the public page" tested at the API level instead, left un-struck.
+- **UACs:** 3/6 confirmed and struck through (list indicator, publish-once date rule, duplicate-
+  slug validation). 3/6 blocked on Epic 7.2, same as `003`.
+- **Status:** stays in `docs/tasks/004-admin-manage-blog.md` (not moved to `done/`).
+
 ### 2026-07-18 — 003: Admin manage projects (partial — stays open)
 
 Full admin CRUD UI at `/admin/projects` (list, `/admin/projects/new`, `/admin/projects/:id`)
@@ -82,9 +101,9 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
 - [`003-admin-manage-projects.md`](003-admin-manage-projects.md) — **3/6 UACs open.** Admin CRUD
   UI is built and working; the 3 open UACs are all blocked on Epic 7.2 (public `/projects` page
   not wired to real data), not on anything left to build here.
-- [`004-admin-manage-blog.md`](004-admin-manage-blog.md) — admin CRUD UI for blog posts,
-  including the publish-once `publishedAt` rule. **Expect the same Epic 7.2 blocker** for its
-  "appears on `/blog`" UACs — see `003`'s changelog entry above.
+- [`004-admin-manage-blog.md`](004-admin-manage-blog.md) — **3/6 UACs open**, same shape and same
+  root cause as `003` (public `/blog` page not wired to real data). Admin CRUD UI is built and
+  working.
 - [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — admin edit form for resume
   summary/experience/education/skills. PDF upload explicitly out of scope (backend not built).
   Likely hits the same Epic 7.2 blocker for its "reflects on `/resume`" UAC.
@@ -92,7 +111,8 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
   UI for contact form submissions. No public-page dependency (messages are admin-only), so this
   one shouldn't hit the Epic 7.2 blocker.
 
-`004`–`006` depend on `002` (done) for the dashboard shell they mount inside, and are ordered by
-priority per the PRD's success metric (Projects/Blog named explicitly; Resume/Messages are
-supporting). Worth prioritizing Epic 7.2 (wiring the public site to real data) before continuing
-further down this list, so `004`/`005` don't land in the same partially-open state as `003`.
+**Two stories in a row have now landed partially-open on the identical Epic 7.2 blocker** (public
+site not wired to real data). `005` will very likely make it three. Strongly worth prioritizing
+Epic 7.2 itself next — a story doesn't exist for it yet in `docs/tasks/`, would need `/new-story`
+first — rather than continuing to `005`/`006` and accumulating a fourth/fifth partially-open
+story on the same root cause.
