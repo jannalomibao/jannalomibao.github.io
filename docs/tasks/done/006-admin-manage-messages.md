@@ -55,13 +55,16 @@ flowchart TD
 
 ## UACs
 
-- Demo that `/admin/messages` lists all contact submissions, newest first, with name, email,
-  message, date, and status visible per row.
-- Demo that switching the filter tab (All/Unread/Read/Archived) re-fetches and shows only
-  matching submissions, using the API's `?status=` param.
-- Demo that clicking "mark read" on an unread submission updates its status and the row reflects
-  that immediately.
-- Demo that archiving a submission moves it out of the "Unread" and "Read" filtered views into
-  "Archived".
-- Demo that there is no "mark unread" action anywhere in the UI — matching that the API doesn't
-  support setting status back to `unread`.
+**Status: 5/5 confirmed.** No public-facing page for this feature, so — unlike `003`/`004`/`005`
+— nothing here depends on Epic 7.2.
+
+- ~~Demo that `/admin/messages` lists all contact submissions, newest first, with name, email,
+  message, date, and status visible per row.~~
+- ~~Demo that switching the filter tab (All/Unread/Read/Archived) re-fetches and shows only
+  matching submissions, using the API's `?status=` param.~~
+- ~~Demo that clicking "mark read" on an unread submission updates its status and the row reflects
+  that immediately.~~
+- ~~Demo that archiving a submission moves it out of the "Unread" and "Read" filtered views into
+  "Archived".~~
+- ~~Demo that there is no "mark unread" action anywhere in the UI — matching that the API doesn't
+  support setting status back to `unread`.~~

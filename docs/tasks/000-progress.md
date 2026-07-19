@@ -6,6 +6,41 @@ at that moment — don't hand-edit either section, they'll be overwritten by the
 
 ## Changelog
 
+### 2026-07-19 — 006: Admin manage messages (done)
+
+List view at `/admin/messages` (name, email, message, date, status per row, newest first), with
+status-filter tabs (All/Unread/Read/Archived mapped to `GET /api/admin/contact?status=`) and
+per-row "Mark read"/"Archive" actions (`PATCH /api/admin/contact/:id`). No "mark unread" control
+anywhere, matching that the API doesn't support that transition. Frontend-only — backend already
+built and verified. Also removed `AdminComingSoon`, now dead code once this was the last of the
+5 originally-planned admin sections (002–006) to get a real screen.
+
+- **Tests:** 73/78 passing across the whole suite (10/10 for this story, `chromium` +
+  `mobile-chromium`; the 5 skips are story `005`'s pre-existing, documented shared-row
+  restriction, unrelated to this story). No unit tests — no isolable branching logic beyond what
+  Playwright already proves against the real API.
+- **First story of the five to close out fully, as predicted** — no public-facing page exists
+  for contact messages, so the Epic 7.2 blocker that partially stalled `003`/`004`/`005` simply
+  doesn't apply here.
+- **No admin "create" endpoint for submissions** (by design — they only originate from the public
+  contact form), so tests seed rows by inserting directly into `contact_submissions` via `psql`
+  rather than routing through the rate-limited (5/IP/hour) public `POST /api/contact`, which also
+  keeps the suite decoupled from that endpoint's still-TODO public-form wiring (Epic 5.1, not
+  this story).
+- **A real test-timing bug caught and fixed:** archiving is async (PATCH + list reload) with no
+  "Saved" indicator on this screen — clicking "Archive" and then immediately switching filter
+  tabs could race the reload, catching the row before its status actually flipped. Fixed by
+  waiting for the row's own "Archive" button to disappear (real completion signal) before
+  switching tabs, same fix shape as story `005`'s load-timing bug.
+- **Also fixed:** a wrong DOM-depth locator caught before it caused a flaky failure (email span
+  to row-with-actions is 4 levels up, not 2 — confirmed by reading the component directly rather
+  than guessing, same lesson as story `003`), and a missing `@types/node` in `e2e/` surfaced by
+  the editor's live diagnostics (Playwright's esbuild transpilation runs untyped, so it silently
+  tolerated `node:child_process` with no type declarations — installed the dev dependency so the
+  suite actually type-checks, not just runs).
+- **UACs:** 5/5 confirmed and struck through.
+- **Status:** moved to `docs/tasks/done/006-admin-manage-messages.md`.
+
 ### 2026-07-19 — 005: Admin manage resume (partial — stays open)
 
 Single edit form at `/admin/resume` (summary, repeatable experience/education rows with add/
@@ -141,13 +176,12 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
   not presence — the "incomplete row" validation error exists at the API level but the form can
   never actually trigger it). Admin edit form itself is built and working. PDF upload
   explicitly out of scope regardless (backend not built).
-- [`006-admin-manage-messages.md`](006-admin-manage-messages.md) — admin list/filter/status-update
-  UI for contact form submissions. No public-page dependency (messages are admin-only), so this
-  one shouldn't hit the Epic 7.2 blocker.
 
-**Three stories in a row have now landed partially-open on the identical Epic 7.2 blocker**
-(public site not wired to real data) — `003`, `004`, and `005` all have it. `006` is the last
-of the originally-planned admin stories and, per its own note above, likely won't hit it (no
-public-facing page for contact messages) — so it may be the first of these four to close out
-fully. Still, strongly worth prioritizing Epic 7.2 itself soon: a story doesn't exist for it yet
-in `docs/tasks/` and would need `/new-story` first.
+All 5 originally-planned admin stories (`002`–`006`) are now built. `006` confirmed the
+prediction from the last three entries: with no public-facing page to depend on, it was the
+first of the CRUD-management stories (`003`–`006`) to close out with all UACs confirmed and no
+open blocker. `003`, `004`, and `005` remain partially open — all three still on the identical
+Epic 7.2 gap (public site not wired to real data), plus `005`'s own distinct DTO-validation
+finding. **Epic 7.2 itself remains the single biggest thing left to prioritize** — a story
+doesn't exist for it yet in `docs/tasks/` and would need `/new-story` first; resolving it would
+very likely let `003`, `004`, and most of `005` close out too, without new admin-side work.

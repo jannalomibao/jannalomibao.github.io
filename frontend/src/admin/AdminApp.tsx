@@ -2,7 +2,6 @@ import { Routes, Route } from "react-router-dom";
 import { AdminAuthProvider } from "@/lib/AdminAuthProvider";
 import RequireAuth from "@/components/admin/RequireAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
-import AdminComingSoon from "@/components/admin/AdminComingSoon";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProjectsList from "@/admin/projects/AdminProjectsList";
@@ -10,6 +9,7 @@ import AdminProjectForm from "@/admin/projects/AdminProjectForm";
 import AdminBlogList from "@/admin/blog/AdminBlogList";
 import AdminBlogForm from "@/admin/blog/AdminBlogForm";
 import AdminResumeForm from "@/admin/resume/AdminResumeForm";
+import AdminMessagesList from "@/admin/messages/AdminMessagesList";
 
 // Everything admin-specific lives behind one lazy import in App.tsx
 // (`const AdminApp = lazy(() => import("@/admin/AdminApp"))`) so
@@ -31,10 +31,7 @@ export default function AdminApp() {
             <Route path="blog/new" element={<AdminBlogForm />} />
             <Route path="blog/:id" element={<AdminBlogForm />} />
             <Route path="resume" element={<AdminResumeForm />} />
-            <Route
-              path="messages"
-              element={<AdminComingSoon section="Messages" story="006" />}
-            />
+            <Route path="messages" element={<AdminMessagesList />} />
           </Route>
         </Route>
       </Routes>
