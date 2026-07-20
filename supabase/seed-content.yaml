@@ -1,0 +1,249 @@
+# Fill this in with your real content, then it gets turned into
+# supabase/seed.sql (see docs/08-seed-data.md for the full process).
+#
+# How to use:
+#   1. Replace every <placeholder> below with your real content.
+#   2. Duplicate the example project/post blocks for each additional one —
+#      each is a "- " list item, just copy the whole block including the
+#      leading "- ".
+#   3. Delete any block you don't want seeded (e.g. leave `posts: []` if you
+#      don't want blog content seeded yet).
+#   4. Hand this back and it gets converted into supabase/seed.sql.
+#
+# Field notes:
+#   - "slug" must be unique per project/post, URL-safe (lowercase,
+#     hyphens, no spaces) — it's what the public URL is built from
+#     (e.g. /projects/<slug>).
+#   - "featured"/"published" are true/false. Unpublished projects/posts
+#     exist in the database but are never returned by the public API
+#     (only visible to you in the admin UI) — useful for drafts.
+#   - Multi-line text (summary, content, bio) can use the `|` block style
+#     shown below — just keep every line indented the same amount.
+#   - image_url should be a real, reachable image URL (Unsplash is what
+#     the rest of the site uses — see frontend/src/data/content.ts for the
+#     pattern) or leave it as a placeholder and swap it later.
+#
+# Filled in below from docs/assets/docs/JannaLomibaoCV.pdf. A few notes on
+# how the CV mapped onto this schema, worth reading before you send it back:
+#   - Fixed a few obvious CV typos when transcribing (Concordia "Universit"
+#     -> "University", "NetJS" -> "NestJS", "Firebas. e" -> "Firebase") —
+#     didn't touch anything you'd typed yourself in this file already
+#     (name/email/github/linkedin), only tidied "Software Developper" ->
+#     "Software Developer" and the missing space in "Montreal,Canada".
+#   - image_url/repo_url/demo_url aren't in the CV at all — every project
+#     below has a placeholder Unsplash image (same style already used in
+#     frontend/src/data/content.ts) and blank repo/demo links. Swap in real
+#     screenshots and links before this goes live.
+#   - No quantified outcomes in the CV (no "reduced X by Y%" type metrics)
+#     — didn't invent any. Each project's "outcome" below just restates
+#     what was actually shipped, per the CV's own bullets.
+#   - resume.experience is filled from the CV's literal "Work Experience"
+#     section (Food Festival All-Rounder, etc.) — none of those are
+#     technical roles, and the CV gives no bullet points for any of them,
+#     so "points" is left empty below rather than invented. The CV's
+#     "Robotics Club – Website Developer" entry (built the CRC Robotics
+#     Competition site in Vue.js) is technical and arguably belongs here
+#     instead/as well — left as a commented-out block so you can decide,
+#     not added silently.
+
+profile:
+  name: Janna Lomibao
+  role: Software Developer
+  tagline: I build full-stack apps and client websites — from React/Next.js frontends to Supabase-backed APIs.
+  location: Montreal, Canada
+  email: jannalomibao.w@gmail.com
+  github: https://github.com/jannalomibao
+  linkedin: https://www.linkedin.com/in/janna-lomibao-01885529a
+  bio: |
+    I'm a Computer Science student at Concordia University in Montreal, coming from a
+    Computer Science and Technology background at Vanier College. I work across the stack —
+    React and Next.js on the frontend, PHP and Supabase/PostgreSQL on the backend — and I like
+    projects that involve real coordination between people, not just CRUD screens.
+
+    Recent work includes Cura, a mobile app for care coordination between caregivers and
+    healthcare professionals, and a real client project building a nail salon's booking site
+    end to end. I've also built with React Native, Flutter, and Vue.js at hackathons (ConUHacks,
+    McHack) and for Concordia's Robotics Club, and I'm an active part of the local dev community
+    through events like CUSEC and Floss Day.
+  # Note: profile/bio isn't its own database table today (it's still
+  # hardcoded in frontend/src/data/content.ts) — filling this in documents
+  # your real content in one place regardless, and it'll matter once/if
+  # that page also gets wired to the database.
+
+resume:
+  summary: >
+    Computer Science student at Concordia University with hands-on experience building
+    full-stack apps (React, Next.js, NestJS, Supabase/PostgreSQL, PHP) and cross-platform mobile
+    apps (React Native, Flutter). Comfortable owning a project end to end, including a real
+    freelance client engagement.
+  skills:
+    - HTML
+    - CSS
+    - Bootstrap
+    - React
+    - Next.js
+    - Supabase
+    - PHP
+    - PostgreSQL
+    - MySQL
+    - Microsoft SQL Server
+    - SQLite
+    - JavaScript
+    - Java
+    - C#
+    - Python
+    - Dart
+    - SQL
+    - Git
+    - GitHub
+    - Visual Studio Code
+    - XAMPP
+    - Agile
+  experience:
+    - role: Software Developer Intern
+      org: Consultation SOS
+      period: Fall 2025
+      points:
+        - Consolidated volunteer shelter contact and case information that had previously been
+          scattered across 9 separate spreadsheets into a single system.
+        - Built a web interface for volunteers to search, update, and retrieve shelter
+          contacts and information, speeding up finding a shelter for animals under a
+          72-hour euthanization notice.
+    - role: Website Developer, Website Department
+      org: Concordia Robotics Club (CRC Robotics Competition site)
+      period: August 2024 – December 2024
+      points:
+        - Helped design and implement the competition website in Vue.js, featuring the
+          team's "Plants vs. Zombies" theme — robot info, team journey, and videos.
+    # The CV's non-technical jobs (Food Festival All-Rounder, On-Call Assistant, Fulfilment
+    # Associate, General Worker) were dropped here in favor of leading with the two directly
+    # relevant to a CS/dev portfolio. Add them back if you'd rather show full work history.
+  education:
+    - school: Concordia University, Montreal, Quebec
+      credential: Bachelor of Computer Science
+      period: Started Fall 2026
+    - school: Vanier College, Montreal, Quebec
+      credential: Computer Science and Technology
+      period: Finished Fall 2025
+    - school: St. Laurent Adult Centre
+      credential: High School Diploma
+      period: Finished Dec 2022
+
+projects:
+  - slug: cura-mobile-app
+    title: Cura Mobile App
+    summary: A mobile app that streamlines care coordination among caregivers, family members, supported persons, and healthcare professionals.
+    problem: |
+      Care coordination between caregivers, family members, supported persons, and healthcare
+      professionals is scattered across disconnected channels, making collaboration and
+      knowledge-sharing difficult.
+    role: Developer — building caregiver support features.
+    outcome: |
+      Ongoing. Caregiver support features shipped so far include a support chat and a
+      community forum for collaboration and knowledge sharing.
+    stack:
+      - React Native
+      - Java Spring Boot
+      - Supabase
+      - AWS
+    # NDA'd — leave image_url as a generic stock photo (not a real screenshot) and repo_url/
+    # demo_url blank. Don't swap these for real assets without checking the NDA terms first.
+    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1600&auto=format&fit=crop"
+    repo_url: ""
+    demo_url: ""
+    featured: true
+    published: true
+
+  - slug: portfolio-website
+    title: Website Portfolio
+    summary: A full-stack personal portfolio to showcase projects, technical skills, resume, and professional experience.
+    problem: |
+      Needed a single, professional place to showcase projects, technical skills, resume, and
+      experience to recruiters and collaborators.
+    role: Full-stack developer — designed and built the entire site (frontend, backend, and deployment).
+    outcome: |
+      Built and shipped a full-stack personal portfolio covering project showcases, a blog, and
+      a resume section. (This is the site you're looking at.)
+    stack:
+      - React
+      - NestJS
+      - Supabase
+      - AWS
+    image_url: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?q=80&w=1600&auto=format&fit=crop"
+    repo_url: "https://github.com/jannalomibao"
+    demo_url: ""
+    featured: true
+    published: true
+
+  - slug: nail-salon-website
+    title: Nail Salon Website (Real Client Project)
+    summary: A responsive website for a real nail salon client, with bookings, customer management, and third-party integrations.
+    problem: |
+      A nail salon client needed an online presence with real booking and customer-management
+      capability, not just a static brochure site.
+    role: Freelance developer — collaborating directly with the client to build the site to their business needs.
+    outcome: |
+      Ongoing, not yet finished. Building a responsive site with back-end booking and
+      customer-management systems, integrated with Instagram, Google Maps, and Square.
+    stack:
+      - Bootstrap
+      - HTML
+      - CSS
+      - JavaScript
+      - PHP
+      - Instagram API
+      - Google Maps API
+      - Square API
+      - phpMyAdmin
+    image_url: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=1600&auto=format&fit=crop"
+    repo_url: ""
+    demo_url: ""
+    featured: false
+    published: false # not finished yet — kept here as a draft, not shown on the public site until it is
+
+  - slug: todo-list-app
+    title: Mobile App for To-Do List
+    summary: A cross-platform to-do app with real-time collaboration and location-aware suggestions.
+    problem: |
+      Wanted a to-do app that supported real-time collaboration between users, not just
+      single-user task lists.
+    role: Developer.
+    outcome: |
+      Shipped a cross-platform Flutter/Dart to-do app with Firebase real-time sync, real-time
+      collaborative task management, and integrated motivational-quote and nearby-places APIs.
+    stack:
+      - Dart
+      - Flutter
+      - Firebase
+      - Google Maps API
+    image_url: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1600&auto=format&fit=crop"
+    repo_url: ""
+    demo_url: ""
+    featured: false
+    published: true
+
+  - slug: travel-agency-website
+    title: Travel Agency Website
+    summary: A responsive travel agency website with interactive booking forms and dynamic content.
+    problem: |
+      A travel agency needed a user-friendly site with interactive booking rather than a static
+      brochure page.
+    role: Developer.
+    outcome: |
+      Built a responsive site with interactive booking forms and dynamic JavaScript-driven
+      content.
+    stack:
+      - HTML
+      - CSS
+      - JavaScript
+    image_url: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?q=80&w=1600&auto=format&fit=crop"
+    repo_url: ""
+    demo_url: ""
+    featured: false
+    published: true
+
+posts:
+  []
+  # Nothing in the CV maps to a blog post — leaving empty. Add entries here
+  # later using the same shape as the projects above (see the field notes
+  # at the top of this file) if/when you want blog content seeded.
