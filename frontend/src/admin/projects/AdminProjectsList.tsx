@@ -56,10 +56,14 @@ export default function AdminProjectsList() {
 
       {projects && projects.length > 0 && (
         <div className="border-t border-line divide-y divide-line">
+          {/* flex-wrap: see AdminBlogList.tsx's identical row for why —
+              without it, ConfirmDeleteButton's expanded "Delete? Confirm
+              Cancel" state squeezes the title to zero width on narrow
+              viewports instead of just truncating it. */}
           {projects.map((project) => (
             <div
               key={project.id}
-              className="flex items-center justify-between gap-4 py-4"
+              className="flex flex-wrap items-center justify-between gap-4 py-4"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span

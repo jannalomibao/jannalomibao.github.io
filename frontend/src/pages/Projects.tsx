@@ -1,8 +1,13 @@
-import { projects } from "@/data/content";
+import { useApi } from "@/hooks/useApi";
+import { listProjects } from "@/api/projects";
 import ProjectCard from "@/components/ui/ProjectCard";
+import ProjectCardSkeleton from "@/components/ui/ProjectCardSkeleton";
 import Reveal from "@/components/ui/Reveal";
+import { ErrorMessage, EmptyMessage } from "@/components/ui/AsyncState";
 
 export default function Projects() {
+  const { data: projects, loading, error } = useApi(listProjects, []);
+
   return (
     <div className="max-w-6xl mx-auto px-6 md:px-10 py-16 md:py-24">
       <Reveal>
@@ -15,13 +20,29 @@ export default function Projects() {
         </h1>
       </Reveal>
 
-      <div className="grid md:grid-cols-2 gap-x-8 gap-y-16 mt-20">
-        {projects.map((project, i) => (
-          <Reveal key={project.slug} delay={i * 0.06}>
-            <ProjectCard project={project} index={i} />
-          </Reveal>
-        ))}
-      </div>
+      {loading && (
+        <div className="grid md:grid-cols-2 gap-x-8 gap-y-16 mt-20">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ProjectCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
+
+      {error && <ErrorMessage className="mt-20" message="Couldn't load projects right now." />}
+
+      {!loading && !error && projects && projects.length === 0 && (
+        <EmptyMessage className="mt-20" message="No projects yet. Check back soon." />
+      )}
+
+      {!loading && !error && projects && projects.length > 0 && (
+        <div className="grid md:grid-cols-2 gap-x-8 gap-y-16 mt-20">
+          {projects.map((project, i) => (
+            <Reveal key={project.slug} delay={i * 0.06}>
+              <ProjectCard project={project} index={i} />
+            </Reveal>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

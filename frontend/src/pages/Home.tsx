@@ -1,11 +1,15 @@
 import { Link } from "react-router-dom";
 import { motion, type Variants } from "framer-motion";
 import { ArrowUpRight, ArrowDown } from "lucide-react";
-import { profile, projects } from "@/data/content";
+import { profile } from "@/data/content";
+import { useApi } from "@/hooks/useApi";
+import { listProjects } from "@/api/projects";
 import ProjectCard from "@/components/ui/ProjectCard";
+import ProjectCardSkeleton from "@/components/ui/ProjectCardSkeleton";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
 import ParallaxImage from "@/components/ui/ParallaxImage";
+import { ErrorMessage, EmptyMessage } from "@/components/ui/AsyncState";
 
 const container: Variants = {
   hidden: {},
@@ -43,7 +47,8 @@ function AnimatedHeadline({ text }: { text: string }) {
 }
 
 export default function Home() {
-  const featured = projects.filter((p) => p.featured);
+  const { data: projects, loading, error } = useApi(listProjects, []);
+  const featured = (projects ?? []).filter((p) => p.featured);
 
   return (
     <>
@@ -97,13 +102,29 @@ export default function Home() {
           <SectionHeading eyebrow="Selected work" title="A few things I've shipped." />
         </Reveal>
 
-        <div className="grid md:grid-cols-2 gap-x-8 gap-y-16">
-          {featured.map((project, i) => (
-            <Reveal key={project.slug} delay={i * 0.08}>
-              <ProjectCard project={project} index={i} />
-            </Reveal>
-          ))}
-        </div>
+        {loading && (
+          <div className="grid md:grid-cols-2 gap-x-8 gap-y-16">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <ProjectCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
+
+        {error && <ErrorMessage message="Couldn't load featured work right now." />}
+
+        {!loading && !error && featured.length === 0 && (
+          <EmptyMessage message="No featured projects yet. Check back soon." />
+        )}
+
+        {!loading && !error && featured.length > 0 && (
+          <div className="grid md:grid-cols-2 gap-x-8 gap-y-16">
+            {featured.map((project, i) => (
+              <Reveal key={project.slug} delay={i * 0.08}>
+                <ProjectCard project={project} index={i} />
+              </Reveal>
+            ))}
+          </div>
+        )}
 
         <Reveal className="mt-16">
           <Link

@@ -1,6 +1,66 @@
-import { test, expect, type Page, type Locator } from "@playwright/test";
+import { test, expect, type Page, type Locator, type APIRequestContext } from "@playwright/test";
 
 // Maps to docs/tasks/001-scroll-parallax-images.md's UACs.
+//
+// The Project detail and Blog cases originally pointed at hardcoded mock-
+// data slugs (ledgerline, designing-apis-for-change) — real since story 007
+// wired these pages to the real API (docs/tasks/007-public-pages-real-data.md),
+// those slugs 404. Project detail now points at a real seeded project.
+// Blog has zero real posts seeded (docs/08-seed-data.md's seed-content.yaml
+// intentionally left posts empty), so this file creates one temporary real
+// published post in beforeAll purely to have something with a hero image to
+// scroll-test, and deletes it in afterAll — not testing blog content, just
+// reusing the same real-data pattern as 007's suite for a real image to
+// drift-test against.
+const OWNER_EMAIL = "owner@local.dev";
+const OWNER_PASSWORD = "local-dev-password-123";
+const API_URL = "http://localhost:3000/api";
+const SUPABASE_URL = "http://127.0.0.1:54321";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+
+async function getAdminToken(request: APIRequestContext): Promise<string> {
+  const res = await request.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+    data: { email: OWNER_EMAIL, password: OWNER_PASSWORD },
+  });
+  const body = await res.json();
+  return body.access_token;
+}
+
+let tempPostSlug: string;
+let tempPostId: string;
+
+test.beforeAll(async ({ request }) => {
+  const token = await getAdminToken(request);
+  tempPostSlug = `parallax-temp-${Date.now()}`;
+
+  const createRes = await request.post(`${API_URL}/admin/posts`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      slug: tempPostSlug,
+      title: "Temporary post for parallax testing",
+      excerpt: "Not real content — created and deleted by 001-scroll-parallax-images.spec.ts.",
+      content: "Not real content.",
+      imageUrl: "https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?q=80&w=1600&auto=format&fit=crop",
+      readMinutes: 1,
+    },
+  });
+  const created = await createRes.json();
+  tempPostId = created.id;
+
+  await request.patch(`${API_URL}/admin/posts/${tempPostId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { published: true },
+  });
+});
+
+test.afterAll(async ({ request }) => {
+  const token = await getAdminToken(request);
+  await request.delete(`${API_URL}/admin/posts/${tempPostId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+});
 
 /** Parses the ty (vertical translate) component out of a computed `matrix(...)` transform. */
 async function translateY(locator: Locator): Promise<number> {
@@ -31,21 +91,22 @@ async function sampleDriftRange(page: Page, track: Locator): Promise<number> {
 }
 
 test.describe("Scroll parallax — site-wide (UAC 1 & 2)", () => {
-  const cases: { path: string; label: string }[] = [
-    { path: "/", label: "Home (about-teaser + featured project cards)" },
-    { path: "/about", label: "About (desk photo)" },
-    { path: "/projects", label: "Projects (project cards)" },
-    { path: "/projects/ledgerline", label: "Project detail (hero image)" },
-    { path: "/blog", label: "Blog (list thumbnails)" },
-    {
-      path: "/blog/designing-apis-for-change",
-      label: "Blog detail (hero image)",
-    },
+  // `path` is a function for the two cases that depend on data not known
+  // until `beforeAll` has run (real seeded project slug is static and known
+  // upfront, but the temp post's slug is generated at runtime) — resolved
+  // inside each test body, which executes after beforeAll regardless.
+  const cases: { path: () => string; label: string }[] = [
+    { path: () => "/", label: "Home (about-teaser + featured project cards)" },
+    { path: () => "/about", label: "About (desk photo)" },
+    { path: () => "/projects", label: "Projects (project cards)" },
+    { path: () => "/projects/cura-mobile-app", label: "Project detail (hero image)" },
+    { path: () => "/blog", label: "Blog (list thumbnails)" },
+    { path: () => `/blog/${tempPostSlug}`, label: "Blog detail (hero image)" },
   ];
 
   for (const { path, label } of cases) {
     test(`${label} — image drifts on scroll`, async ({ page }) => {
-      await page.goto(path);
+      await page.goto(path());
       const box = page.getByTestId("parallax-box").first();
       await expect(box).toBeVisible();
       const track = box.getByTestId("parallax-track");

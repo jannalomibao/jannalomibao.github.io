@@ -6,6 +6,57 @@ at that moment — don't hand-edit either section, they'll be overwritten by the
 
 ## Changelog
 
+### 2026-07-20 — 007: Public pages consume real API data — Epic 7.2 (done)
+
+Replaced `frontend/src/data/content.ts` mock data with real API fetches on `Projects`,
+`ProjectDetail`, `Blog`, `BlogDetail`, `Resume`, and Home's featured-projects section — a new
+`frontend/src/api/` module (public, unauthenticated GET reads, mirroring the shape of the admin
+one), a shared `useApi` fetch hook, and shared `Skeleton`/`ErrorMessage`/`EmptyMessage`
+components for loading/error/empty states. Frontend-only; the backend read endpoints already
+existed and were already verified. Profile/bio data (Home's intro copy, About, Footer, Contact's
+social links) stays on `content.ts` deliberately — no `profile` table exists in the schema, and
+adding one is new scope, not this story's.
+
+- **Tests:** 102/110 passing across the whole suite (8 skipped by design — 5 from `005`'s
+  pre-existing single-shared-row restriction, 3 new ones from this story's own "Blog against
+  real data" tests, restricted to `chromium` for the identical reason: `serial` mode only orders
+  tests within one project's run, not across chromium vs. `mobile-chromium`'s separate parallel
+  executions against the same shared backend — same fix shape as `005`).
+- **This closes the loop on three consecutive partially-open stories.** `003`, `004`, and `005`
+  each had UACs blocked specifically because the public pages they depended on still rendered
+  mock data — re-verify those open UACs against the real site now that this has shipped, since
+  they were never confirmed false, just unconfirmable until now.
+- **Verified against real seeded data, not fixtures** (`supabase/seed.sql`,
+  `docs/08-seed-data.md`) — including two UACs (not-found, empty-state) that had real,
+  non-contrived cases fall out of that real data for free: `nail-salon-website` (a real project,
+  genuinely unpublished) for not-found, and blog's genuine zero-posts state for empty. API-down
+  and Projects' empty state were simulated via `page.route()` network interception rather than
+  stopping the shared dev backend or temporarily unpublishing real portfolio content — same real
+  code paths, non-destructive triggers.
+- **Two real bugs found and fixed along the way, neither in this story's stated scope, both
+  blocking a clean regression run:**
+  1. `e2e/tests/005-admin-manage-resume.spec.ts` had a **data-destructive test bug** — its UAC 4
+     cleanup unconditionally `PATCH`ed `experience: []`, which was harmless against empty dev
+     data but silently deleted the real seeded resume experience the first time the full suite
+     ran against real content. Its UAC 2 test also never cleaned up its own added row. Both now
+     capture and restore the real pre-test array instead.
+  2. `AdminProjectsList.tsx` / `AdminBlogList.tsx` had a **real responsive layout bug**: on a
+     narrow viewport, `ConfirmDeleteButton`'s expanded "Delete? Confirm Cancel" state squeezed
+     the row title to zero width (invisible, not just truncated), since the actions group was
+     `shrink-0` and the title was the only flexible item absorbing the overflow. Fixed with
+     `flex-wrap` on the row. Caught by `004`'s own UAC 6 test failing on `mobile-chromium` during
+     this story's regression pass — a real bug, not a flaky test, left unfixed it would have
+     stayed silently broken indefinitely since `004`'s suite alone never happened to trigger it
+     until real content (longer titles/dates) plus real data volume shifted the row layout.
+- **UACs:** 8/8 confirmed and struck through.
+- **Status:** moved to `docs/tasks/done/007-public-pages-real-data.md`.
+- **Not pushed to production yet — deliberately.** The backend isn't deployed anywhere (no
+  production Supabase project, no container host — see architecture doc §8, still not built).
+  Shipping this to the live GitHub Pages site right now would replace today's working (if
+  mock-data-based) public pages with error states for every visitor, since there's nothing at
+  `VITE_API_URL` in production. Committed locally; deploy is a decision for the site owner once
+  backend deployment exists, not something to push through automatically.
+
 ### 2026-07-19 — 006: Admin manage messages (done)
 
 List view at `/admin/messages` (name, email, message, date, status per row, newest first), with
@@ -165,23 +216,24 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
 
 ## Remaining
 
-- [`003-admin-manage-projects.md`](003-admin-manage-projects.md) — **3/6 UACs open.** Admin CRUD
-  UI is built and working; the 3 open UACs are all blocked on Epic 7.2 (public `/projects` page
-  not wired to real data), not on anything left to build here.
-- [`004-admin-manage-blog.md`](004-admin-manage-blog.md) — **3/6 UACs open**, same shape and same
-  root cause as `003` (public `/blog` page not wired to real data). Admin CRUD UI is built and
-  working.
-- [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — **3/5 UACs open.** 2 on the same
-  Epic 7.2 gap as `003`/`004`; 1 on a distinct finding (resume's nested DTOs only validate type,
-  not presence — the "incomplete row" validation error exists at the API level but the form can
-  never actually trigger it). Admin edit form itself is built and working. PDF upload
-  explicitly out of scope regardless (backend not built).
+- [`003-admin-manage-projects.md`](003-admin-manage-projects.md) — **3/6 UACs open, but likely
+  stale now.** All 3 were blocked specifically on Epic 7.2 (public `/projects` page not wired to
+  real data), which shipped in `007`. Not yet re-verified against the real, now-live public
+  page — needs a re-check pass (re-run/re-confirm those 3 UACs for real), not a rebuild.
+- [`004-admin-manage-blog.md`](004-admin-manage-blog.md) — **3/6 UACs open, likely stale**, same
+  shape and same reason as `003` — blocked on Epic 7.2, which is now done. Needs the same
+  re-check pass.
+- [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — **3/5 UACs open.** 2 of the 3 were
+  blocked on Epic 7.2 (now done — needs the same re-check pass); the 3rd is a distinct, still-
+  unresolved finding (resume's nested DTOs only validate type, not presence — the "incomplete
+  row" validation error exists at the API level but the form can never actually trigger it), not
+  affected by `007` at all.
 
-All 5 originally-planned admin stories (`002`–`006`) are now built. `006` confirmed the
-prediction from the last three entries: with no public-facing page to depend on, it was the
-first of the CRUD-management stories (`003`–`006`) to close out with all UACs confirmed and no
-open blocker. `003`, `004`, and `005` remain partially open — all three still on the identical
-Epic 7.2 gap (public site not wired to real data), plus `005`'s own distinct DTO-validation
-finding. **Epic 7.2 itself remains the single biggest thing left to prioritize** — a story
-doesn't exist for it yet in `docs/tasks/` and would need `/new-story` first; resolving it would
-very likely let `003`, `004`, and most of `005` close out too, without new admin-side work.
+**Epic 7.2 shipped in `007`** — all 5 originally-planned admin stories (`002`–`006`) are built,
+and the public site now reads real data instead of mock content for Projects/Blog/Resume/Home.
+The 6 UACs above that were blocked on it are very likely confirmable now but haven't actually
+been re-run yet — that's the concrete next step, cheaper than it sounds (no new code, just
+re-verifying each bullet against the real site) and would leave only `005`'s one distinct
+DTO-validation finding as genuinely open. **`007` was deliberately not pushed to production** —
+see its changelog entry above for why (no backend deployed yet, pushing now would break the live
+site's currently-working pages).

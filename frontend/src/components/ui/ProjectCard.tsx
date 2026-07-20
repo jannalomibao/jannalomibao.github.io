@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
-import type { Project } from "@/data/content";
+import type { Project } from "@/api/types";
 import ParallaxImage from "@/components/ui/ParallaxImage";
 
 export default function ProjectCard({ project, index }: { project: Project; index: number }) {
@@ -11,7 +11,7 @@ export default function ProjectCard({ project, index }: { project: Project; inde
       data-cursor-hover
     >
       <ParallaxImage
-        src={project.image}
+        src={project.imageUrl}
         alt={project.title}
         className="rounded-2xl aspect-[4/3] bg-ink/5"
         imgClassName="transition-transform duration-700 ease-out group-hover:scale-105"

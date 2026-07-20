@@ -52,8 +52,14 @@ export default function AdminBlogList() {
 
       {posts && posts.length > 0 && (
         <div className="border-t border-line divide-y divide-line">
+          {/* flex-wrap: without it, on a narrow viewport the actions group
+              (which grows when ConfirmDeleteButton is in its "Delete?
+              Confirm Cancel" state) squeezed the title's shrink-able flex
+              item all the way to zero width — invisible, not just
+              truncated. Wrapping the actions to their own line keeps the
+              title readable instead. */}
           {posts.map((post) => (
-            <div key={post.id} className="flex items-center justify-between gap-4 py-4">
+            <div key={post.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
               <div className="flex items-center gap-3 min-w-0">
                 <span
                   aria-label={post.published ? "Published" : "Not published"}

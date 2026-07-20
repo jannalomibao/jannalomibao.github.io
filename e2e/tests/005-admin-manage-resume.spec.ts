@@ -54,6 +54,11 @@ test("Adding an experience row and saving persists it in the public API (UAC 2)"
 }) => {
   await login(page);
   const marker = uniqueMarker("uac2-role");
+  // Capture the real pre-test experience so cleanup can restore exactly
+  // this, not wipe it — resume is real seeded content now (docs/08-seed-
+  // data.md), not disposable mock data, so this test must leave it exactly
+  // as it found it, not just remove its own marker.
+  const original = await getApiResume(page);
 
   await page.goto("/admin/resume");
   await page.getByRole("button", { name: "Add row" }).first().click();
@@ -81,6 +86,11 @@ test("Adding an experience row and saving persists it in the public API (UAC 2)"
   // Public /resume page reflects it — BLOCKED, same Epic 7.2 gap as
   // stories 003/004 (frontend/src/pages/Resume.tsx also imports mock
   // data). Verified the real guarantee above (the API) instead.
+
+  await page.request.patch(`${API_URL}/admin/resume`, {
+    headers: { Authorization: `Bearer ${await getToken(page)}` },
+    data: { experience: original.experience },
+  });
 });
 
 test("Removing a row and saving actually removes it from the public API (UAC 3)", async ({
@@ -138,6 +148,12 @@ test("Backend validation IS row-specific for omitted fields, but the form can ne
   page,
 }) => {
   await login(page);
+  // See UAC 2's comment — capture the real pre-test state so cleanup below
+  // restores it exactly, rather than wiping every experience row (this used
+  // to PATCH `experience: []` unconditionally, which silently destroyed
+  // real seeded resume content the moment this suite started running
+  // against real data instead of an empty dev table).
+  const original = await getApiResume(page);
 
   const omittedFieldsRes = await page.request.patch(`${API_URL}/admin/resume`, {
     headers: { Authorization: `Bearer ${await getToken(page)}` },
@@ -159,10 +175,11 @@ test("Backend validation IS row-specific for omitted fields, but the form can ne
   });
   expect(emptyStringsRes.status()).toBe(200); // confirms the gap: this "incomplete" row is accepted
 
-  // Clean up the empty-string row this test intentionally wrote to prove the point.
+  // Restore the exact pre-test experience array — not `[]` — undoing the
+  // empty-string row this test intentionally wrote to prove the point.
   await page.request.patch(`${API_URL}/admin/resume`, {
     headers: { Authorization: `Bearer ${await getToken(page)}` },
-    data: { experience: [] },
+    data: { experience: original.experience },
   });
 });
 
