@@ -281,7 +281,9 @@ treat this as "resume not yet published" and degrade gracefully, not crash.
 **Request body:** any subset of `{ summary, experience, education, skills }` (`pdfUrl` excluded
 — set only via the dedicated upload route below).
 **Validation:** `experience[]`/`education[]` entries must match the `ResumeExperience`/
-`ResumeEducation` shapes if provided; `skills` must be a string array.
+`ResumeEducation` shapes if provided — every field (`role`/`org`/`period` for experience;
+`school`/`credential`/`period` for education) is required and must be a non-empty string, not
+just present with the right type; `skills` must be a string array.
 **Response `200`:** updated `Resume`.
 
 ### `POST /api/admin/resume/pdf` — Admin

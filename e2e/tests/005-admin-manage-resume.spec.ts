@@ -111,12 +111,23 @@ test("Removing a row and saving actually removes it from the public page (UAC 3)
   await login(page);
   const marker = uniqueMarker("uac3-role");
 
-  // Add a uniquely-marked row first.
+  // Add a uniquely-marked row first. org/period must be filled too, not
+  // just role — the backend DTOs now reject any blank field on save (the
+  // fix for UAC 4), so a row can no longer be saved half-filled the way
+  // this test used to get away with.
   await page.goto("/admin/resume");
   await page.getByRole("button", { name: "Add row" }).first().click();
   let rows = page.locator('[aria-label^="Experience"][aria-label$="role"]');
   let lastIndex = (await rows.count()) - 1;
   await rows.nth(lastIndex).fill(marker);
+  await page
+    .locator('[aria-label^="Experience"][aria-label$="org"]')
+    .nth(lastIndex)
+    .fill("Test Org");
+  await page
+    .locator('[aria-label^="Experience"][aria-label$="period"]')
+    .nth(lastIndex)
+    .fill("2020-2021");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("status")).toBeVisible();
 
@@ -145,56 +156,62 @@ test("Removing a row and saving actually removes it from the public page (UAC 3)
   await expectRoleOnPublicResumePage(page, marker, false);
 });
 
-// UAC 4, as literally written ("submitting an incomplete row... shows the
-// validation error"), turned out not to be reachable through the actual
-// admin form — a real finding, not a test bug, discovered by trying it:
-// the backend's ResumeExperienceDto/ResumeEducationDto only validate type
-// (@IsString()), not presence. An *omitted* field fails validation and
-// returns a row-specific message; an *empty string* passes it. The form's
-// controlled inputs always send a string (defaulting new rows to `""`),
-// never omit a key — so a user filling in only some fields and saving gets
-// a silent 200, not the row-specific error the story describes. Confirmed
-// directly against both shapes below rather than assumed. Left as a
-// documented gap for the story (see docs/tasks/005-admin-manage-resume.md)
-// rather than fixed here — loosening/tightening the DTOs is backend work
-// this frontend-only story doesn't own.
-test("Backend validation IS row-specific for omitted fields, but the form can never send that shape (UAC 4 — documents why it's blocked)", async ({
+// UAC 4 was previously blocked: the backend's ResumeExperienceDto/
+// ResumeEducationDto only validated *type* (@IsString()), not *presence* —
+// an omitted field 400'd with a row-specific message, but the admin form's
+// controlled inputs always send a string (new rows default to ""), so a
+// user filling in only some fields and saving got a silent 200, not the
+// row-specific error the story describes. Fixed by adding @IsNotEmpty()
+// alongside @IsString() on every identifying field in
+// backend/src/resume/dto/update-resume.dto.ts — now both shapes 400.
+test("Backend rejects both omitted and empty-string fields with a row-specific message (UAC 4a, API level)", async ({
   page,
 }) => {
   await login(page);
-  // See UAC 2's comment — capture the real pre-test state so cleanup below
-  // restores it exactly, rather than wiping every experience row (this used
-  // to PATCH `experience: []` unconditionally, which silently destroyed
-  // real seeded resume content the moment this suite started running
-  // against real data instead of an empty dev table).
-  const original = await getApiResume(page);
+  const token = await getToken(page);
 
   const omittedFieldsRes = await page.request.patch(`${API_URL}/admin/resume`, {
-    headers: { Authorization: `Bearer ${await getToken(page)}` },
+    headers: { Authorization: `Bearer ${token}` },
     data: { experience: [{ role: "Dev" }] }, // org/period/points omitted entirely
   });
   expect(omittedFieldsRes.status()).toBe(400);
-  const body = await omittedFieldsRes.json();
-  expect(body.message.some((m: string) => m.startsWith("experience.0."))).toBe(true);
-
-  // Restore the resume to a clean state — that PATCH call did persist
-  // (the request was rejected with 400, so nothing was actually saved;
-  // nothing to clean up here, unlike the accidental-write this test
-  // avoided by asserting 400 rather than sending the empty-string variant
-  // that a previous manual check confirmed *does* silently save).
+  const omittedBody = await omittedFieldsRes.json();
+  expect(omittedBody.message.some((m: string) => m.startsWith("experience.0."))).toBe(true);
 
   const emptyStringsRes = await page.request.patch(`${API_URL}/admin/resume`, {
-    headers: { Authorization: `Bearer ${await getToken(page)}` },
+    headers: { Authorization: `Bearer ${token}` },
     data: { experience: [{ role: "", org: "", period: "", points: [] }] },
   });
-  expect(emptyStringsRes.status()).toBe(200); // confirms the gap: this "incomplete" row is accepted
+  expect(emptyStringsRes.status()).toBe(400); // previously 200 — this was the gap, now fixed
+  const emptyBody = await emptyStringsRes.json();
+  expect(emptyBody.message.some((m: string) => m.startsWith("experience.0."))).toBe(true);
 
-  // Restore the exact pre-test experience array — not `[]` — undoing the
-  // empty-string row this test intentionally wrote to prove the point.
-  await page.request.patch(`${API_URL}/admin/resume`, {
-    headers: { Authorization: `Bearer ${await getToken(page)}` },
-    data: { experience: original.experience },
-  });
+  // Neither request persisted anything (both rejected with 400) — nothing
+  // to clean up, unlike before the fix.
+});
+
+test("Submitting a blank experience row through the real admin form shows a row-specific error and doesn't save (UAC 4b, form level)", async ({
+  page,
+}) => {
+  await login(page);
+  // See UAC 2's comment — capture the real pre-test state so we can confirm
+  // it's genuinely unchanged after the rejected save below.
+  const original = await getApiResume(page);
+
+  await page.goto("/admin/resume");
+  await page.getByRole("button", { name: "Add row" }).first().click();
+  // Deliberately leave the new row's role/org/period blank — this is
+  // exactly the shape the form always sends for an incomplete row (see the
+  // fixed DTOs' comment), now reachable and testable through the UI itself
+  // rather than only via direct API calls. The new row lands after the
+  // real seeded rows, so its index in the error path isn't 0 — matched by
+  // pattern rather than a hardcoded index.
+  await page.getByRole("button", { name: "Save" }).click();
+
+  await expect(page.getByRole("alert")).toContainText(/experience\.\d+\.(role|org|period)/);
+
+  const resume = await getApiResume(page);
+  expect(resume.experience).toEqual(original.experience);
 });
 
 async function getToken(page: Page): Promise<string> {

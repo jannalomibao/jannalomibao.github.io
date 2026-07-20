@@ -1,14 +1,28 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
+// @IsNotEmpty() alongside @IsString() (not @IsString() alone) is deliberate:
+// the admin form's controlled inputs always send a string for every field —
+// new rows default to "" rather than omitting the key — so type-only
+// validation could never actually reject an incomplete row (docs/tasks/
+// done/005-admin-manage-resume.md's UAC 4 finding). This closes that gap.
 class ResumeExperienceDto {
   @IsString()
+  @IsNotEmpty()
   role: string;
 
   @IsString()
+  @IsNotEmpty()
   org: string;
 
   @IsString()
+  @IsNotEmpty()
   period: string;
 
   @IsArray()
@@ -18,12 +32,15 @@ class ResumeExperienceDto {
 
 class ResumeEducationDto {
   @IsString()
+  @IsNotEmpty()
   school: string;
 
   @IsString()
+  @IsNotEmpty()
   credential: string;
 
   @IsString()
+  @IsNotEmpty()
   period: string;
 }
 

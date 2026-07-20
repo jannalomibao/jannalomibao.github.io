@@ -6,6 +6,34 @@ at that moment — don't hand-edit either section, they'll be overwritten by the
 
 ## Changelog
 
+### 2026-07-20 — 005's last open item: fixed resume DTO presence validation (done)
+
+Closed the one UAC left open after the 003/004/005 re-check pass (below). The backend's
+`ResumeExperienceDto`/`ResumeEducationDto` (`backend/src/resume/dto/update-resume.dto.ts`) only
+validated *type* (`@IsString()`), not *presence* — an omitted field correctly 400'd, but an
+empty string (all the admin form's controlled inputs ever send) silently passed. Added
+`@IsNotEmpty()` alongside `@IsString()` on every identifying field (`role`/`org`/`period` for
+experience, `school`/`credential`/`period` for education). `docs/07-api-contract.md` §6 updated
+to state the non-empty requirement explicitly, matching the DTO now.
+
+- **Backend checks:** `npx nest build`, `npx eslint`, `npx tsc --noEmit` all clean.
+- **Tests:** rewrote `005`'s UAC 4 tests — one confirms both shapes now 400 at the API level
+  (previously only the omitted-field shape did); a **new** test submits a blank row through the
+  real admin form and confirms the row-specific error actually displays and nothing saves —
+  previously undemonstrable through the UI at all, now genuinely reachable, which is what the
+  UAC literally asked for from the start.
+- **A real knock-on test bug caught by the fix working correctly:** `005`'s UAC 3 test added its
+  marker experience row with only `role` filled in, relying on the very gap just fixed to get
+  away with leaving `org`/`period` blank. Now correctly rejected — fixed the test to fill in all
+  three required fields, matching what a real save actually requires.
+- **UACs:** 5/5 confirmed. Moved to `docs/tasks/done/005-admin-manage-resume.md`.
+- **Worth flagging, not fixed here (out of scope for this fix):** the exact same pattern —
+  `@IsString()` without `@IsNotEmpty()` on fields `docs/07-api-contract.md` already documents as
+  "required, non-empty" — exists in `CreateProjectDto` and `CreatePostDto` too (title, summary,
+  problem, role, outcome, imageUrl / title, excerpt, content, imageUrl). Nothing currently
+  depends on it being fixed (no open UAC references it), but it's the same latent gap, just not
+  yet surfaced by a story that happens to test for it.
+
 ### 2026-07-20 — Re-verified 003/004/005 against the real public site now that 007 shipped
 
 Not a new build — a re-check pass. `007` unblocked 6 UACs across `003`, `004`, and `005` that
@@ -244,15 +272,14 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
 
 ## Remaining
 
-- [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — **1/5 UACs open.** The other 4
-  (including the 2 that were blocked on Epic 7.2) are now confirmed. The remaining one is a
-  distinct, unrelated finding: resume's nested DTOs only validate type, not presence — the
-  "incomplete row" validation error exists at the API level but the form can never actually
-  trigger it (loosening/tightening the DTOs is backend work outside this frontend-only story).
+Nothing — every story in `docs/tasks/` is in `docs/tasks/done/` with all UACs confirmed. Full
+list: `001` (scroll parallax), `002` (admin login/shell), `003` (admin projects), `004` (admin
+blog), `005` (admin resume), `006` (admin messages), `007` (public pages read real data).
 
-**Every other story is done.** `003` and `004` closed out fully in the 2026-07-20 re-check pass
-above once Epic 7.2 (`007`) unblocked their public-page UACs. `005` is the only story left with
-anything open, and it's a genuinely separate, small, well-understood backend-validation gap —
-not more admin-UI or public-page work. **`007` was deliberately not pushed to production** — see
-its changelog entry above for why (no backend deployed yet, pushing now would break the live
-site's currently-working pages); the re-check pass above only ran locally for the same reason.
+**One thing worth prioritizing regardless:** `007` (and the re-check/fix work that followed it)
+was deliberately never pushed to production — the backend isn't deployed anywhere yet (no
+production Supabase project, no container host, per architecture doc §8). Everything since is
+committed locally only. Pushing now would replace the live site's currently-working (mock-data)
+pages with error states for every visitor. Also noted but not acted on: `CreateProjectDto`/
+`CreatePostDto` have the same latent type-not-presence validation gap `005`'s fix just closed for
+resume — no open UAC references it, so it wasn't in scope, but it's the same class of bug.

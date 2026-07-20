@@ -69,22 +69,18 @@ flowchart TD
 
 ## UACs
 
-**Status: 4/5 confirmed. 1/5 still blocked**, for a reason unrelated to Epic 7.2 (which shipped
-in [`007-public-pages-real-data.md`](done/007-public-pages-real-data.md) and unblocked UACs 2
-and 3 below, re-verified against the real, now-live public `/resume` page):
-
-- **The one remaining open UAC (4) is a genuinely different finding**, not a public-page problem:
-  the backend's `ResumeExperienceDto`/`ResumeEducationDto`
-  (`backend/src/resume/dto/update-resume.dto.ts`) only validate *type* (`@IsString()`), not
-  *presence*. Confirmed directly against both shapes: `{"role":"Dev"}` (org/period/points
-  **omitted**) → `400` with a row-specific message; `{"role":"","org":"","period":"",
-  "points":[]}` (fields present but **empty**) → `200`, silently accepted. The admin form's
-  controlled inputs always send a string (new rows default to `""`), never omit a key — so this
-  validation path, while real and working, is unreachable through the form as built. Not fixed
-  here — loosening/tightening those DTOs is backend work this frontend-only story doesn't own.
-  See `e2e/tests/005-admin-manage-resume.spec.ts`'s UAC 4 test for both curl-equivalent checks.
-
-Not moved to `done/` while this one UAC is open.
+**Status: 5/5 confirmed.** UACs 2 and 3 were unblocked by
+[`007-public-pages-real-data.md`](done/007-public-pages-real-data.md) and re-verified against
+the real, now-live public `/resume` page. UAC 4 was a genuinely different, unrelated finding —
+the backend's `ResumeExperienceDto`/`ResumeEducationDto`
+(`backend/src/resume/dto/update-resume.dto.ts`) validated *type* (`@IsString()`) but not
+*presence*, so an omitted field 400'd correctly but an empty string (all the admin form's
+controlled inputs ever send) silently passed. Fixed by adding `@IsNotEmpty()` alongside
+`@IsString()` on every identifying field (`role`/`org`/`period`, `school`/`credential`/`period`);
+`docs/07-api-contract.md` §6 updated to state the non-empty requirement explicitly.
+`e2e/tests/005-admin-manage-resume.spec.ts`'s UAC 4 tests now cover both the API-level shapes
+and, for the first time, the real admin form actually triggering and displaying the row-specific
+error — previously undemonstrable through the UI, now genuinely reachable.
 
 - ~~Demo that `/admin/resume` loads pre-filled with the current summary, experience, education,
   and skills from the API.~~
@@ -92,9 +88,7 @@ Not moved to `done/` while this one UAC is open.
   `/resume` page reflects the new entry immediately.~~
 - ~~Demo that removing an experience or education row and saving actually removes it from the
   public page too, not just the form.~~
-- Demo that submitting an incomplete experience/education row (e.g. missing `role`) shows the
-  validation error against that specific row, not a generic failure. **Blocked** — see finding
-  above. The validation *exists and works* for omitted fields; the form just never produces
-  that shape, so a user can never actually trigger it today.
+- ~~Demo that submitting an incomplete experience/education row (e.g. missing `role`) shows the
+  validation error against that specific row, not a generic failure.~~
 - ~~Demo that there is no functional PDF upload control — either it's absent entirely or clearly
   marked as not yet available, and nothing on this screen implies the PDF can be changed today.~~
