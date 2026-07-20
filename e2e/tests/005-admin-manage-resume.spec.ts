@@ -40,6 +40,20 @@ async function getApiResume(page: Page) {
   return res.json();
 }
 
+// UPDATE: Epic 7.2 shipped (docs/tasks/done/007-public-pages-real-data.md)
+// — the public /resume page now fetches from the real API. See
+// 003-admin-manage-projects.spec.ts's identical helper for why the
+// skeleton-gone wait matters (page.goto() doesn't wait for the async fetch).
+async function expectRoleOnPublicResumePage(page: Page, role: string, expected: boolean) {
+  await page.goto("/resume");
+  await expect(page.locator(".animate-pulse").first()).toHaveCount(0);
+  if (expected) {
+    await expect(page.getByText(role)).toBeVisible();
+  } else {
+    await expect(page.getByText(role)).toHaveCount(0);
+  }
+}
+
 test("Form loads pre-filled from the API (UAC 1)", async ({ page }) => {
   await login(page);
 
@@ -49,7 +63,7 @@ test("Form loads pre-filled from the API (UAC 1)", async ({ page }) => {
   await expect(page.locator("#summary")).toHaveValue(current.summary);
 });
 
-test("Adding an experience row and saving persists it in the public API (UAC 2)", async ({
+test("Adding an experience row and saving persists it on the public page (UAC 2)", async ({
   page,
 }) => {
   await login(page);
@@ -83,9 +97,7 @@ test("Adding an experience row and saving persists it in the public API (UAC 2)"
     resume.experience.some((row: { role: string }) => row.role === marker),
   ).toBe(true);
 
-  // Public /resume page reflects it — BLOCKED, same Epic 7.2 gap as
-  // stories 003/004 (frontend/src/pages/Resume.tsx also imports mock
-  // data). Verified the real guarantee above (the API) instead.
+  await expectRoleOnPublicResumePage(page, marker, true);
 
   await page.request.patch(`${API_URL}/admin/resume`, {
     headers: { Authorization: `Bearer ${await getToken(page)}` },
@@ -93,7 +105,7 @@ test("Adding an experience row and saving persists it in the public API (UAC 2)"
   });
 });
 
-test("Removing a row and saving actually removes it from the public API (UAC 3)", async ({
+test("Removing a row and saving actually removes it from the public page (UAC 3)", async ({
   page,
 }) => {
   await login(page);
@@ -110,6 +122,7 @@ test("Removing a row and saving actually removes it from the public API (UAC 3)"
 
   let resume = await getApiResume(page);
   expect(resume.experience.some((row: { role: string }) => row.role === marker)).toBe(true);
+  await expectRoleOnPublicResumePage(page, marker, true);
 
   // Now remove it.
   await page.goto("/admin/resume");
@@ -129,6 +142,7 @@ test("Removing a row and saving actually removes it from the public API (UAC 3)"
 
   resume = await getApiResume(page);
   expect(resume.experience.some((row: { role: string }) => row.role === marker)).toBe(false);
+  await expectRoleOnPublicResumePage(page, marker, false);
 });
 
 // UAC 4, as literally written ("submitting an incomplete row... shows the

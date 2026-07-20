@@ -2,17 +2,16 @@ import { test, expect, type Page, type Locator } from "@playwright/test";
 
 // Maps to docs/tasks/003-admin-manage-projects.md's UACs.
 //
-// IMPORTANT FINDING (see docs/tasks/000-progress.md for the full note): the
-// public /projects page still renders from frontend/src/data/content.ts mock
-// data — it has never been wired to the real API (Epic 7.2, not done). So
-// any UAC literally about "the public /projects page" reflecting an admin
-// change can't be demonstrated against the actual rendered page right now;
-// asserting "a draft doesn't appear on the public page" would be vacuously
-// true (nothing admin-created ever appears there, published or not). Where
-// that's the case, this file tests the real, non-vacuous guarantee instead
-// — the public API (GET /api/projects) — which is what the public page will
-// automatically start reflecting once Epic 7.2 wires it up, with zero
-// further backend or admin-UI changes needed.
+// UPDATE: Epic 7.2 shipped in docs/tasks/done/007-public-pages-real-data.md
+// — the public /projects page now fetches from the real API instead of
+// frontend/src/data/content.ts mock data. UACs 2, 3, and 6 originally could
+// only be verified at the API level (asserting against the public *page*
+// would have been vacuously true, since nothing admin-created ever appeared
+// there regardless of published state). Now re-verified against the real
+// rendered public page directly, in addition to the API checks already here
+// — both are kept, since the API check is still the more precise signal for
+// "did the write actually take effect" and the page check is what the UAC
+// literally asks for.
 const OWNER_EMAIL = "owner@local.dev";
 const OWNER_PASSWORD = "local-dev-password-123";
 const API_URL = "http://localhost:3000/api";
@@ -65,6 +64,23 @@ async function createProject(
   await page.waitForURL(/\/admin\/projects$/);
 }
 
+// `page.goto()` doesn't wait for the page's async GET /api/projects fetch to
+// resolve — a plain `.count()` snapshot right after navigating can catch the
+// page mid-skeleton-state, before the real content (or its absence) is even
+// rendered, giving a false negative. Waiting for the skeleton to be gone
+// first (content-agnostic — doesn't depend on which project titles exist)
+// avoids that race; the two branches below then use Playwright's
+// auto-retrying `expect` rather than a one-shot `.count()`.
+async function expectOnPublicPage(page: Page, title: string, expected: boolean) {
+  await page.goto("/projects");
+  await expect(page.locator(".animate-pulse").first()).toHaveCount(0);
+  if (expected) {
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  } else {
+    await expect(page.getByRole("heading", { name: title })).toHaveCount(0);
+  }
+}
+
 async function deleteProjectRow(page: Page, title: string) {
   if (!page.url().endsWith("/admin/projects")) {
     await page.goto("/admin/projects");
@@ -89,7 +105,7 @@ test("Admin list shows drafts and published with a clear indicator (UAC 1)", asy
   await deleteProjectRow(page, title);
 });
 
-test("Creating a project defaults to draft (published: false), excluded from the public API (UAC 2)", async ({
+test("Creating a project defaults to draft (published: false), excluded from the public page (UAC 2)", async ({
   page,
 }) => {
   await login(page);
@@ -103,10 +119,12 @@ test("Creating a project defaults to draft (published: false), excluded from the
   const apiProjects: { slug: string }[] = await apiRes.json();
   expect(apiProjects.some((p) => p.slug === slug)).toBe(false);
 
+  await expectOnPublicPage(page, title, false);
+
   await deleteProjectRow(page, title);
 });
 
-test("Publishing toggles the project's visibility in the public API immediately (UAC 3)", async ({
+test("Publishing toggles the project's visibility on the public page immediately (UAC 3)", async ({
   page,
 }) => {
   await login(page);
@@ -122,7 +140,9 @@ test("Publishing toggles the project's visibility in the public API immediately 
   };
 
   expect(await isPublicNow()).toBe(false);
+  await expectOnPublicPage(page, title, false);
 
+  await page.goto("/admin/projects");
   await getRow(page, title).getByRole("link", { name: "Edit" }).click();
   await page.waitForURL(/\/admin\/projects\/.+/);
   await page.getByRole("checkbox", { name: "Published" }).check();
@@ -130,8 +150,10 @@ test("Publishing toggles the project's visibility in the public API immediately 
   await page.waitForURL(/\/admin\/projects$/);
 
   expect(await isPublicNow()).toBe(true);
+  await expectOnPublicPage(page, title, true);
 
   // Unpublish again — immediately removed, no rebuild.
+  await page.goto("/admin/projects");
   await getRow(page, title).getByRole("link", { name: "Edit" }).click();
   await page.waitForURL(/\/admin\/projects\/.+/);
   await page.getByRole("checkbox", { name: "Published" }).uncheck();
@@ -139,6 +161,7 @@ test("Publishing toggles the project's visibility in the public API immediately 
   await page.waitForURL(/\/admin\/projects$/);
 
   expect(await isPublicNow()).toBe(false);
+  await expectOnPublicPage(page, title, false);
 
   await deleteProjectRow(page, title);
 });
@@ -179,7 +202,7 @@ test("Slug is locked/uneditable when editing (UAC 5)", async ({ page }) => {
   await deleteProjectRow(page, title);
 });
 
-test("Delete requires confirmation, then removes it from the admin list and the public API (UAC 6)", async ({
+test("Delete requires confirmation, then removes it from the admin list and the public page (UAC 6)", async ({
   page,
 }) => {
   await login(page);
@@ -194,7 +217,9 @@ test("Delete requires confirmation, then removes it from the admin list and the 
     return list.some((p) => p.slug === slug);
   };
   expect(await apiHasIt()).toBe(true);
+  await expectOnPublicPage(page, title, true);
 
+  await page.goto("/admin/projects");
   // Clicking Delete once shows a confirm step, not an immediate delete.
   const row = getRow(page, title);
   await row.getByRole("button", { name: "Delete" }).click();
@@ -204,4 +229,5 @@ test("Delete requires confirmation, then removes it from the admin list and the 
   await row.getByRole("button", { name: "Confirm" }).click();
   await expect(page.locator(`text=${title}`)).toHaveCount(0);
   expect(await apiHasIt()).toBe(false);
+  await expectOnPublicPage(page, title, false);
 });

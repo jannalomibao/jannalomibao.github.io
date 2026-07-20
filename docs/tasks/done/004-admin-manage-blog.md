@@ -61,29 +61,22 @@ flowchart TD
 
 ## UACs
 
-**Status: 3/6 fully confirmed. 3/6 blocked** — the identical Epic 7.2 gap found while building
-story 003: the public `/blog` page also still renders from `frontend/src/data/content.ts` mock
-data (confirmed directly — it imports `posts` from that file, no API call). Every UAC below that
-literally references "the public `/blog` page" or "the public site" can't be demonstrated
-against the actual rendered page yet; `e2e/tests/004-admin-manage-blog.spec.ts` verifies the
-real, non-vacuous guarantee instead — the public API (`GET /api/posts`) — same approach as `003`.
-See `docs/tasks/000-progress.md` for the full note. Not moved to `done/` while any UAC is open.
+**Status: 6/6 confirmed.** The 3 that were blocked on Epic 7.2 (public `/blog` page not wired to
+real data) were re-verified against the real, now-live public page once
+[`007-public-pages-real-data.md`](done/007-public-pages-real-data.md) shipped —
+`e2e/tests/004-admin-manage-blog.spec.ts` now asserts against the rendered public page directly
+(in addition to the API checks that were already there), not just the API.
 
 - ~~Demo that `/admin/blog` lists every post including drafts, showing the publish date for
   published posts and a clear "not published" indicator for drafts.~~
-- Demo that creating a new post has no publish toggle and always saves as a draft — it does
-  **not** appear on the public `/blog` page. **Partially confirmed:** no publish toggle in
-  create mode, and exclusion from `GET /api/posts`, both verified. The public *page* claim is
-  blocked (see note above).
-- Demo that editing an existing post exposes a publish toggle, and flipping it on makes the post
-  appear on the public `/blog` page immediately. **Confirmed at the API level** (`GET
-  /api/posts` reflects the toggle immediately) — the public *page* claim is blocked (see note
-  above).
+- ~~Demo that creating a new post has no publish toggle and always saves as a draft — it does
+  **not** appear on the public `/blog` page.~~
+- ~~Demo that editing an existing post exposes a publish toggle, and flipping it on makes the post
+  appear on the public `/blog` page immediately.~~
 - ~~Demo that unpublishing a previously-published post, then publishing it again, keeps the
   original publish date rather than showing a new one — the UI reflects the backend's
   set-once rule, doesn't try to override it.~~
 - ~~Demo that submitting a duplicate or malformed slug on create shows the exact validation error
   the API returns.~~
-- Demo that deleting a post requires confirmation, then removes it from both the admin list and
-  the public site. **Partially confirmed:** confirmation step and removal from the admin list,
-  and from `GET /api/posts`, both verified. The public *site* claim is blocked (see note above).
+- ~~Demo that deleting a post requires confirmation, then removes it from both the admin list and
+  the public site.~~

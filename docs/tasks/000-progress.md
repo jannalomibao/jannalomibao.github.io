@@ -6,6 +6,34 @@ at that moment — don't hand-edit either section, they'll be overwritten by the
 
 ## Changelog
 
+### 2026-07-20 — Re-verified 003/004/005 against the real public site now that 007 shipped
+
+Not a new build — a re-check pass. `007` unblocked 6 UACs across `003`, `004`, and `005` that
+had only ever been confirmed at the API level (asserting against the public page would have been
+vacuously true before). Updated each spec file to assert against the real rendered public page
+directly (`e2e/tests/003-admin-manage-projects.spec.ts`,
+`e2e/tests/004-admin-manage-blog.spec.ts`, `e2e/tests/005-admin-manage-resume.spec.ts`), kept the
+existing API-level checks alongside them, ran the full suite, and updated each story doc.
+
+- **Tests:** 102/110 passing (same counts as `007`'s own run — this pass only changed what
+  existing tests assert, not how many exist for 003-005). One `mobile-chromium` test
+  (`003`'s UAC 4, untouched by this pass) failed once under heavy parallel load, then passed
+  both in isolation and on a full clean re-run — a real flake from many workers hitting the
+  shared local Postgres at once, not a regression.
+- **A real test-timing bug caught and fixed, same shape as ones found in stories 005/006:**
+  `page.goto()` doesn't wait for the target page's async data fetch, and a plain `.count()`
+  snapshot (not an auto-retrying `expect`) taken right after navigating could catch the public
+  page mid-skeleton-state and report an item "missing" that would have appeared a moment later.
+  Fixed by waiting for the loading skeleton (`.animate-pulse`) to be gone — content-agnostic,
+  doesn't depend on which specific titles exist — before asserting presence or absence.
+- **003 and 004: 6/6 UACs now confirmed** — moved to `docs/tasks/done/`.
+- **005: 4/5 confirmed** — the 2 Epic-7.2-blocked UACs are now verified against the real page;
+  the 5th (UAC 4) is unrelated (a distinct resume-DTO validation-looseness finding) and stays
+  open. `005` stays in `docs/tasks/`, not `done/`.
+- Cleaned up several leftover test rows in the local `projects` table left behind by earlier
+  debugging runs (pre-dating this pass's fixes) — confirmed the suite is self-cleaning on a
+  repeat run before finishing.
+
 ### 2026-07-20 — 007: Public pages consume real API data — Epic 7.2 (done)
 
 Replaced `frontend/src/data/content.ts` mock data with real API fetches on `Projects`,
@@ -216,24 +244,15 @@ backend surface. Also stood up the project's first Playwright suite (`e2e/`, reu
 
 ## Remaining
 
-- [`003-admin-manage-projects.md`](003-admin-manage-projects.md) — **3/6 UACs open, but likely
-  stale now.** All 3 were blocked specifically on Epic 7.2 (public `/projects` page not wired to
-  real data), which shipped in `007`. Not yet re-verified against the real, now-live public
-  page — needs a re-check pass (re-run/re-confirm those 3 UACs for real), not a rebuild.
-- [`004-admin-manage-blog.md`](004-admin-manage-blog.md) — **3/6 UACs open, likely stale**, same
-  shape and same reason as `003` — blocked on Epic 7.2, which is now done. Needs the same
-  re-check pass.
-- [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — **3/5 UACs open.** 2 of the 3 were
-  blocked on Epic 7.2 (now done — needs the same re-check pass); the 3rd is a distinct, still-
-  unresolved finding (resume's nested DTOs only validate type, not presence — the "incomplete
-  row" validation error exists at the API level but the form can never actually trigger it), not
-  affected by `007` at all.
+- [`005-admin-manage-resume.md`](005-admin-manage-resume.md) — **1/5 UACs open.** The other 4
+  (including the 2 that were blocked on Epic 7.2) are now confirmed. The remaining one is a
+  distinct, unrelated finding: resume's nested DTOs only validate type, not presence — the
+  "incomplete row" validation error exists at the API level but the form can never actually
+  trigger it (loosening/tightening the DTOs is backend work outside this frontend-only story).
 
-**Epic 7.2 shipped in `007`** — all 5 originally-planned admin stories (`002`–`006`) are built,
-and the public site now reads real data instead of mock content for Projects/Blog/Resume/Home.
-The 6 UACs above that were blocked on it are very likely confirmable now but haven't actually
-been re-run yet — that's the concrete next step, cheaper than it sounds (no new code, just
-re-verifying each bullet against the real site) and would leave only `005`'s one distinct
-DTO-validation finding as genuinely open. **`007` was deliberately not pushed to production** —
-see its changelog entry above for why (no backend deployed yet, pushing now would break the live
-site's currently-working pages).
+**Every other story is done.** `003` and `004` closed out fully in the 2026-07-20 re-check pass
+above once Epic 7.2 (`007`) unblocked their public-page UACs. `005` is the only story left with
+anything open, and it's a genuinely separate, small, well-understood backend-validation gap —
+not more admin-UI or public-page work. **`007` was deliberately not pushed to production** — see
+its changelog entry above for why (no backend deployed yet, pushing now would break the live
+site's currently-working pages); the re-check pass above only ran locally for the same reason.

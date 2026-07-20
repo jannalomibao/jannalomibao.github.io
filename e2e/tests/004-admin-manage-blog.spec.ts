@@ -2,13 +2,11 @@ import { test, expect, type Page, type Locator } from "@playwright/test";
 
 // Maps to docs/tasks/004-admin-manage-blog.md's UACs.
 //
-// SAME FINDING AS STORY 003 (see docs/tasks/000-progress.md): the public
-// /blog page also still renders from frontend/src/data/content.ts mock data
-// (confirmed directly — it imports `posts` from that file, not an API call).
-// UACs 2/3/6 literally reference "the public /blog page" / "the public
-// site" and can't be meaningfully demonstrated against the actual rendered
-// page yet — tested via the real underlying guarantee (the public API)
-// instead, same approach as 003.
+// UPDATE: Epic 7.2 shipped in docs/tasks/done/007-public-pages-real-data.md
+// — the public /blog page now fetches from the real API instead of
+// frontend/src/data/content.ts mock data. UACs 2, 3, and 6 originally could
+// only be verified at the API level; now re-verified against the real
+// rendered public page directly too, alongside the existing API checks.
 const OWNER_EMAIL = "owner@local.dev";
 const OWNER_PASSWORD = "local-dev-password-123";
 const API_URL = "http://localhost:3000/api";
@@ -49,6 +47,20 @@ async function createPost(page: Page, opts: { slug: string; title: string }) {
   await fillPostForm(page, opts);
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/admin\/blog$/);
+}
+
+// See 003-admin-manage-projects.spec.ts's identical helper for why the
+// skeleton-gone wait matters — page.goto() doesn't wait for the async
+// GET /api/posts fetch, so a snapshot check right after navigating can
+// catch the page mid-skeleton-state.
+async function expectOnPublicPage(page: Page, title: string, expected: boolean) {
+  await page.goto("/blog");
+  await expect(page.locator(".animate-pulse").first()).toHaveCount(0);
+  if (expected) {
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  } else {
+    await expect(page.getByRole("heading", { name: title })).toHaveCount(0);
+  }
 }
 
 async function deletePostRow(page: Page, title: string) {
@@ -93,11 +105,12 @@ test("Create mode has no publish toggle and always saves as a draft (UAC 2)", as
   const apiRes = await page.request.get(`${API_URL}/posts`);
   const apiPosts: { slug: string }[] = await apiRes.json();
   expect(apiPosts.some((p) => p.slug === slug)).toBe(false);
+  await expectOnPublicPage(page, title, false);
 
   await deletePostRow(page, title);
 });
 
-test("Publishing via edit makes the post visible in the public API immediately (UAC 3)", async ({
+test("Publishing via edit makes the post visible on the public page immediately (UAC 3)", async ({
   page,
 }) => {
   await login(page);
@@ -112,7 +125,9 @@ test("Publishing via edit makes the post visible in the public API immediately (
     return list.some((p) => p.slug === slug);
   };
   expect(await isPublicNow()).toBe(false);
+  await expectOnPublicPage(page, title, false);
 
+  await page.goto("/admin/blog");
   await getRow(page, title).getByRole("link", { name: "Edit" }).click();
   await page.waitForURL(/\/admin\/blog\/.+/);
   await expect(page.getByRole("checkbox", { name: "Published" })).toBeVisible();
@@ -121,6 +136,7 @@ test("Publishing via edit makes the post visible in the public API immediately (
   await page.waitForURL(/\/admin\/blog$/);
 
   expect(await isPublicNow()).toBe(true);
+  await expectOnPublicPage(page, title, true);
 
   await deletePostRow(page, title);
 });
@@ -191,7 +207,7 @@ test("Duplicate slug on create shows the API's exact validation error (UAC 5)", 
   await deletePostRow(page, title);
 });
 
-test("Delete requires confirmation, then removes it from the admin list and the public API (UAC 6)", async ({
+test("Delete requires confirmation, then removes it from the admin list and the public page (UAC 6)", async ({
   page,
 }) => {
   await login(page);
@@ -211,7 +227,9 @@ test("Delete requires confirmation, then removes it from the admin list and the 
     return list.some((p) => p.slug === slug);
   };
   expect(await apiHasIt()).toBe(true);
+  await expectOnPublicPage(page, title, true);
 
+  await page.goto("/admin/blog");
   const row = getRow(page, title);
   await row.getByRole("button", { name: "Delete" }).click();
   await expect(row.getByText("Delete?")).toBeVisible();
@@ -220,6 +238,7 @@ test("Delete requires confirmation, then removes it from the admin list and the 
   await row.getByRole("button", { name: "Confirm" }).click();
   await expect(page.locator(`text=${title}`)).toHaveCount(0);
   expect(await apiHasIt()).toBe(false);
+  await expectOnPublicPage(page, title, false);
 });
 
 // Reads the Supabase session token straight out of localStorage, since the

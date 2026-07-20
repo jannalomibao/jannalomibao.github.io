@@ -69,35 +69,32 @@ flowchart TD
 
 ## UACs
 
-**Status: 2/5 fully confirmed. 3/5 blocked, for two different reasons:**
+**Status: 4/5 confirmed. 1/5 still blocked**, for a reason unrelated to Epic 7.2 (which shipped
+in [`007-public-pages-real-data.md`](done/007-public-pages-real-data.md) and unblocked UACs 2
+and 3 below, re-verified against the real, now-live public `/resume` page):
 
-1. **Epic 7.2 (same recurring gap as `003`/`004`):** the public `/resume` page also still
-   renders from mock data — confirmed directly (`frontend/src/pages/Resume.tsx` imports from
-   `@/data/content`, no API call). UACs 2 and 3 below hit this.
-2. **A genuinely different, new finding for UAC 4:** the backend's `ResumeExperienceDto`/
-   `ResumeEducationDto` (`backend/src/resume/dto/update-resume.dto.ts`) only validate *type*
-   (`@IsString()`), not *presence*. Confirmed directly against both shapes: `{"role":"Dev"}`
-   (org/period/points **omitted**) → `400` with a row-specific message; `{"role":"","org":"",
-   "period":"","points":[]}` (fields present but **empty**) → `200`, silently accepted. The
-   admin form's controlled inputs always send a string (new rows default to `""`), never omit a
-   key — so this validation path, while real and working, is unreachable through the form as
-   built. Not fixed here — loosening/tightening those DTOs is backend work this frontend-only
-   story doesn't own. See `e2e/tests/005-admin-manage-resume.spec.ts`'s UAC 4 test for both
-   curl-equivalent checks.
+- **The one remaining open UAC (4) is a genuinely different finding**, not a public-page problem:
+  the backend's `ResumeExperienceDto`/`ResumeEducationDto`
+  (`backend/src/resume/dto/update-resume.dto.ts`) only validate *type* (`@IsString()`), not
+  *presence*. Confirmed directly against both shapes: `{"role":"Dev"}` (org/period/points
+  **omitted**) → `400` with a row-specific message; `{"role":"","org":"","period":"",
+  "points":[]}` (fields present but **empty**) → `200`, silently accepted. The admin form's
+  controlled inputs always send a string (new rows default to `""`), never omit a key — so this
+  validation path, while real and working, is unreachable through the form as built. Not fixed
+  here — loosening/tightening those DTOs is backend work this frontend-only story doesn't own.
+  See `e2e/tests/005-admin-manage-resume.spec.ts`'s UAC 4 test for both curl-equivalent checks.
 
-Not moved to `done/` while any UAC is open.
+Not moved to `done/` while this one UAC is open.
 
 - ~~Demo that `/admin/resume` loads pre-filled with the current summary, experience, education,
   and skills from the API.~~
-- Demo that adding an experience row, filling it in, and saving persists it — the public
-  `/resume` page reflects the new entry immediately. **Confirmed at the API level** (`GET
-  /api/resume` reflects the new row) — the public *page* claim is blocked (Epic 7.2, see above).
-- Demo that removing an experience or education row and saving actually removes it from the
-  public page too, not just the form. **Confirmed at the API level** — the public *page* claim
-  is blocked (Epic 7.2, see above).
+- ~~Demo that adding an experience row, filling it in, and saving persists it — the public
+  `/resume` page reflects the new entry immediately.~~
+- ~~Demo that removing an experience or education row and saving actually removes it from the
+  public page too, not just the form.~~
 - Demo that submitting an incomplete experience/education row (e.g. missing `role`) shows the
   validation error against that specific row, not a generic failure. **Blocked** — see finding
-  #2 above. The validation *exists and works* for omitted fields; the form just never produces
+  above. The validation *exists and works* for omitted fields; the form just never produces
   that shape, so a user can never actually trigger it today.
 - ~~Demo that there is no functional PDF upload control — either it's absent entirely or clearly
   marked as not yet available, and nothing on this screen implies the PDF can be changed today.~~
